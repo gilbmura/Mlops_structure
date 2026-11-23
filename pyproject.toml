@@ -1,0 +1,22 @@
+[project]
+name = "brain-mri-classifier"
+version = "1.0.0"
+description = "Educational four-class brain MRI classifier (BRISC 2025) with FastAPI, Streamlit, background retraining and Docker."
+requires-python = ">=3.12,<3.14"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "slow: trains a small model end to end (deselect with -m 'not slow')",
+    "needs_artifacts: needs the prepared dataset and the trained model in this checkout",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:You are saving your model as an HDF5 file:UserWarning",
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+
+[tool.ruff]
+line-length = 140
+target-version = "py312"

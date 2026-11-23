@@ -1,0 +1,111 @@
+# Local deployment. Prerequisites: prepared dataset in ./data, trained model in ./models,
+# and a .env file (copy .env.example). Then:
+#   docker compose up -d --build                 # 1 API replica
+#   docker compose up -d --scale api=3           # 3 API replicas behind the gateway
+#   docker compose restart gateway               # re-resolve replicas after scaling
+# UI: http://localhost:8501   API (via load balancer): http://localhost:8000/docs
+name: brain-mri
+
+x-app-env: &app-env
+  APP_DATA_DIR: /app/data
+  APP_STATE_DIR: /app/state
+  MODELS_DIR: /app/models
+  REPORTS_DIR: /app/reports
+  LOG_LEVEL: INFO
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.api
+    image: brain-mri-api:local
+    environment:
+      <<: *app-env
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in .env (see .env.example)}
+      TF_NUM_THREADS: ${API_TF_THREADS:-1}
+    volumes:
+      - ./data:/app/data:ro          # prepared dataset + similarity index (read-only)
+      - ./models:/app/models         # registry; written by admin activation/rollback
+      - ./reports:/app/reports:ro    # evaluation artifacts shown in the UI
+      - state:/app/state             # SQLite, staged uploads, job logs
+    expose:
+      - "8000"
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPUS:-1.0}"
+          memory: 1536M
+    restart: unless-stopped
+
+  gateway:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./deploy/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: brain-mri-api:local
+    command: ["python", "-m", "worker.main"]
+    healthcheck:
+      disable: true   # the image's HTTP check is for the API; the worker serves no HTTP
+    environment:
+      <<: *app-env
+      TF_NUM_THREADS: ${WORKER_TF_THREADS:-0}
+    volumes:
+      - ./data:/app/data             # writes preprocessing caches
+      - ./models:/app/models         # registers and promotes candidates
+      - state:/app/state
+    deploy:
+      resources:
+        limits:
+          cpus: "${WORKER_CPUS:-4.0}"
+          memory: 4G
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  probe:
+    image: brain-mri-api:local
+    command: ["python", "-m", "worker.probe", "--interval", "${PROBE_INTERVAL_SECONDS:-30}"]
+    healthcheck:
+      disable: true
+    environment:
+      <<: *app-env
+      API_URL: http://gateway:8000
+    volumes:
+      - state:/app/state
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.ui
+    image: brain-mri-ui:local
+    environment:
+      API_URL: http://gateway:8000
+    ports:
+      - "8501:8501"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
+volumes:
+  state:

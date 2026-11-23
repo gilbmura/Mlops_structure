@@ -1,0 +1,106 @@
+{
+  "api": "http://127.0.0.1:8000",
+  "health": {
+    "status": "ok",
+    "model_loaded": true,
+    "model_version": "v002",
+    "process_uptime_seconds": 586.3,
+    "process_started_at": "2026-11-21T11:07:53+00:00",
+    "served_by": "257cb1f55f91",
+    "detail": null
+  },
+  "active_model": "v002",
+  "predictions": [
+    {
+      "file": "brisc2025_test_00007_gl_ax_t1.jpg",
+      "true": "glioma",
+      "predicted": "glioma",
+      "confidence": 0.9819,
+      "message": "Tumor detected \u2014 predicted type: glioma.",
+      "served_by": "34ff1c9ded21"
+    },
+    {
+      "file": "brisc2025_test_00263_me_ax_t1.jpg",
+      "true": "meningioma",
+      "predicted": "no_tumor",
+      "confidence": 0.9822,
+      "message": "No tumor detected in this image.",
+      "served_by": "257cb1f55f91"
+    },
+    {
+      "file": "brisc2025_test_00563_no_ax_t1.jpg",
+      "true": "no_tumor",
+      "predicted": "no_tumor",
+      "confidence": 0.9971,
+      "message": "No tumor detected in this image.",
+      "served_by": "0080163f5116"
+    },
+    {
+      "file": "brisc2025_test_00705_pi_ax_t1.jpg",
+      "true": "pituitary",
+      "predicted": "meningioma",
+      "confidence": 0.45,
+      "message": "Tumor detected \u2014 predicted type: meningioma.",
+      "served_by": "34ff1c9ded21"
+    }
+  ],
+  "retraining": {
+    "batch_id": "6a45b4e58b2c",
+    "upload_counts": {
+      "staged": 100
+    },
+    "admitted": 100,
+    "job_id": "a78ad55b9d65",
+    "status_sequence": [
+      "queued",
+      "running",
+      "succeeded"
+    ],
+    "final": {
+      "id": "a78ad55b9d65",
+      "kind": "retrain",
+      "status": "succeeded",
+      "created_at": "2026-11-21T11:17:44+00:00",
+      "started_at": "2026-11-21T11:17:44+00:00",
+      "finished_at": "2026-11-21T12:32:58+00:00",
+      "params": {
+        "smoke": false,
+        "admitted_uploads_at_request": 100
+      },
+      "result": {
+        "candidate_version": "v003",
+        "previous_active_version": "v002",
+        "promoted": false,
+        "active_version": "v002",
+        "decision": {
+          "promote": false,
+          "candidate_score": 0.954794956318675,
+          "active_score": 0.9301967017028034,
+          "reasons": [
+            "macro_f1: candidate 0.9548 vs active 0.9302 (allowed drop 0.01) -> ok",
+            "recall for meningioma fell by 0.0533 (> 0.05)"
+          ]
+        },
+        "uploads_included": 100,
+        "train_images": 4120,
+        "dataset_version": "brisc2025-clean-v1+uploads-4aecbec620",
+        "candidate_validation": {
+          "accuracy": 0.9527649769585254,
+          "macro_f1": 0.954794956318675,
+          "balanced_accuracy": 0.9528319782041227
+        },
+        "active_validation": {
+          "accuracy": 0.923963133640553,
+          "macro_f1": 0.9301967017028034,
+          "balanced_accuracy": 0.9325955537598869
+        },
+        "epochs_run": 40,
+        "training_seconds": 4487.0
+      },
+      "error": null,
+      "log_path": "/app/state/jobs/a78ad55b9d65.log"
+    }
+  },
+  "active_model_after": "v002",
+  "failures": []
+}

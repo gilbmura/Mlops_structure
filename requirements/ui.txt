@@ -1,0 +1,5 @@
+# Streamlit UI only (no TensorFlow; talks to the API over HTTP).
+streamlit==1.67.0
+requests==2.34.2
+pandas==3.1.1
+altair==6.3.0

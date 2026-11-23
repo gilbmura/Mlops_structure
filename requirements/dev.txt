@@ -1,0 +1,10 @@
+# Local development: everything, plus notebook, tests and load testing.
+-r serving.txt
+-r ui.txt
+matplotlib==3.11.2
+pytest==9.2.0
+httpx==0.28.1
+locust==2.47.0
+jupyter==1.1.1
+nbconvert==7.17.2
+ipykernel==7.4.0

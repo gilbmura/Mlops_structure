@@ -1,0 +1,80 @@
+{
+  "environment": {
+    "host_cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "host_logical_cpus": 8,
+    "host_os": "Windows-11-10.0.26300-SP0",
+    "docker_vm_cpus": 8,
+    "docker_vm_memory_gib": 7.59,
+    "api_container_limits": {
+      "cpus": "1.0",
+      "memory": "1536M",
+      "tf_threads": "1"
+    },
+    "load_balancer": "nginx least_conn",
+    "workload": {
+      "endpoint": "POST /predict (multipart JPEG from the held-out test split)",
+      "users": 60,
+      "spawn_rate_per_s": 10.0,
+      "think_time_s": "0.5-1.5 (uniform)",
+      "measured_seconds": 120,
+      "warmup_seconds": 30,
+      "note": "Locust ran on the same machine as the containers; no training job was running."
+    }
+  },
+  "runs": [
+    {
+      "replicas": 1,
+      "replicas_that_served_traffic": 1,
+      "started_at": "2026-11-21T11:05:33+00:00",
+      "requests": 3405,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "requests_per_s": 30.406500720846886,
+      "successful_rps": 30.406500720846886,
+      "median_ms": 860.0,
+      "p95_ms": 1800.0,
+      "p99_ms": 3000.0,
+      "mean_ms": 959.8528433191452,
+      "responses_per_replica": {
+        "34ff1c9ded21": 3425
+      }
+    },
+    {
+      "replicas": 2,
+      "replicas_that_served_traffic": 2,
+      "started_at": "2026-11-21T11:08:34+00:00",
+      "requests": 5240,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "requests_per_s": 46.40106686326721,
+      "successful_rps": 46.40106686326721,
+      "median_ms": 220.0,
+      "p95_ms": 740.0,
+      "p99_ms": 1100.0,
+      "mean_ms": 277.2756193133332,
+      "responses_per_replica": {
+        "257cb1f55f91": 2616,
+        "34ff1c9ded21": 2627
+      }
+    },
+    {
+      "replicas": 3,
+      "replicas_that_served_traffic": 3,
+      "started_at": "2026-11-21T11:11:37+00:00",
+      "requests": 6081,
+      "failures": 0,
+      "failure_rate": 0.0,
+      "requests_per_s": 53.81916709302372,
+      "successful_rps": 53.81916709302372,
+      "median_ms": 58.0,
+      "p95_ms": 340.0,
+      "p99_ms": 540.0,
+      "mean_ms": 106.07669271415847,
+      "responses_per_replica": {
+        "257cb1f55f91": 2043,
+        "34ff1c9ded21": 2042,
+        "0080163f5116": 2016
+      }
+    }
+  ]
+}

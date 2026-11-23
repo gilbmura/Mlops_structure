@@ -1,0 +1,89 @@
+# Non-secret pipeline configuration. Paths, secrets and service URLs come from
+# environment variables instead (see .env.example and config/settings.py).
+
+dataset:
+  version: brisc2025-clean-v1
+  archive_root: brisc2025
+  source: "BRISC 2025 — Fateh et al., Scientific Data 13, 361 (2026), doi:10.1038/s41597-026-06753-y; Kaggle briscdataset/brisc2025 (stated licence CC BY 4.0)"
+  seed: 42
+  # Real dataset images held back *before* initial training so the upload and
+  # retraining workflow can be demonstrated with genuine, unseen, labelled data.
+  retrain_demo_per_class: 25
+  validation_fraction: 0.15
+  test_fraction: 0.15
+
+duplicates:
+  # Thumbnails are letterboxed greyscale images used to confirm hash matches.
+  thumbnail_size: 64
+  # Pair rules: perceptual-hash Hamming distance (64-bit DCT hash) AND Pearson
+  # correlation of thumbnails. Linked pairs are kept but forced into one split.
+  near_duplicate: {max_hamming: 12, min_correlation: 0.98}   # resized / re-encoded copies
+  related: {max_hamming: 8, min_correlation: 0.93}           # likely neighbouring slices of one scan
+  # Flagged for manual review only; at this looser rule unrelated classes begin
+  # to link, so these pairs are not used to constrain the split.
+  review: {max_hamming: 10, min_correlation: 0.90}
+
+preprocessing:
+  image_size: 128            # square side after letterbox padding + resize
+  resample: bilinear
+
+augmentation:                # applied to training batches only
+  horizontal_flip: true      # left/right anatomy is roughly symmetric; vertical flips are not used
+  rotation_degrees: 10
+  zoom: 0.10
+  translation: 0.05
+  contrast: 0.10
+  brightness: 0.10
+
+training:
+  architecture: cnn          # "cnn" (final) or "baseline"
+  batch_size: 32
+  max_epochs: 40
+  learning_rate: 0.001
+  early_stopping_patience: 8
+  reduce_lr_patience: 3
+  monitor: val_macro_f1      # model selection metric on the validation split
+  class_weighting: balanced  # inverse frequency computed from training labels only
+  smoke:
+    max_epochs: 2
+    samples_per_class: 24
+
+retraining:
+  # Continue the project's own trained CNN; initial training still uses random weights.
+  learning_rate: 0.0001
+
+promotion:
+  metric: macro_f1
+  # A candidate may be promoted when its validation macro-F1 is no worse than the
+  # active model's by more than this margin, and no class recall falls further
+  # than max_class_recall_drop. Both are measured on the same fixed validation set.
+  non_inferiority_margin: 0.01
+  max_class_recall_drop: 0.05
+
+uploads:
+  max_file_bytes: 10485760           # 10 MiB per image
+  max_files_per_batch: 200
+  max_batch_bytes: 104857600         # 100 MiB per request (images or ZIP)
+  max_zip_entries: 1000
+  max_zip_uncompressed_bytes: 314572800   # 300 MiB in total once decompressed
+  max_compression_ratio: 100         # per entry; typical JPEG/PNG ratios are close to 1
+  image_min_side: 64
+  image_max_side: 4096
+
+input_gate:
+  # An image failing ANY check is refused: no class, score or tumour message is
+  # returned. Rule thresholds come from the BRISC data (measured on the 128 px
+  # standardized images; see reports/input_gate/). These checks make answers on
+  # unrelated images much rarer, but they cannot prove an image is a brain MRI.
+  max_channel_spread: 8.0      # mean RGB channel difference; every BRISC file is 0 (greyscale)
+  max_aspect_ratio: 2.5        # widest BRISC slice is 1.97:1
+  min_contrast_std: 8.0        # flattest BRISC slice has std 19.9
+  border_width: 6              # px ring at the edge of the standardized image
+  max_border_mean: 110         # MRI backgrounds are black: median 7; only 2 of 5,856 real slices exceed 110
+  # Feature-distance threshold = this percentile of real validation MRIs' distances,
+  # i.e. about 1 % of genuine slices are refused by design.
+  feature_distance_percentile: 99.0
+
+serving:
+  low_confidence_threshold: 0.60     # below this the UI says the model is uncertain
+  model_refresh_seconds: 2.0         # how often replicas check the registry for a new active model

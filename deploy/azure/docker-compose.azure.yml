@@ -1,0 +1,38 @@
+# Azure VM override: adds HTTPS (Caddy) and stops publishing plain-HTTP ports.
+# Use together with the base file:
+#   docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml up -d --build
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"      # ACME HTTP challenge + redirect to HTTPS
+      - "443:443"
+    environment:
+      SITE_HOST: ${SITE_HOST:?Set SITE_HOST to the VM's DNS name}
+    volumes:
+      - ./deploy/azure/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - gateway
+      - ui
+    restart: unless-stopped
+
+  api:
+    environment:
+      # Caddy serves the API under /api and strips that prefix before forwarding.
+      # Telling uvicorn the root path makes Swagger (/api/docs) fetch /api/openapi.json
+      # and send "Try it out" requests to /api/...; internal callers keep using /health etc.
+      UVICORN_ROOT_PATH: /api
+
+  gateway:
+    ports: !reset []   # reachable only through Caddy
+
+  ui:
+    ports: !reset []
+    environment:
+      API_URL: http://gateway:8000
+
+volumes:
+  caddy_data:
+  caddy_config:

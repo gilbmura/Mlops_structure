@@ -1,0 +1,142 @@
+{
+  "version": "v002",
+  "rules": {
+    "max_channel_spread": 8.0,
+    "max_aspect_ratio": 2.5,
+    "min_contrast_std": 8.0,
+    "border_width": 6,
+    "max_border_mean": 110,
+    "feature_distance_percentile": 99.0
+  },
+  "calibration": {
+    "method": "min class-conditional Mahalanobis distance on penultimate CNN features (Ledoit-Wolf shared covariance)",
+    "threshold": 17.1634,
+    "threshold_percentile_of_validation": 99.0,
+    "train_images": 4020,
+    "validation_images": 868,
+    "validation_refused_fraction": 0.0104,
+    "train_refused_fraction": 0.003,
+    "covariance_shrinkage": 0.003095,
+    "calibrated_by": "scripts/calibrate_input_gate.py (base training split)"
+  },
+  "real_mri_refusals": {
+    "validation": {
+      "images": 868,
+      "accepted": 859,
+      "refused: feature distance": 8,
+      "refused: rules": 1,
+      "refused_fraction": 0.0104
+    },
+    "test": {
+      "images": 868,
+      "accepted": 863,
+      "refused: feature distance": 5,
+      "refused_fraction": 0.0058
+    },
+    "retrain_demo": {
+      "images": 100,
+      "accepted": 100,
+      "refused_fraction": 0.0
+    }
+  },
+  "probes": [
+    {
+      "probe": "portrait photo, colour",
+      "expected": "refuse",
+      "outcome": "refused: rules",
+      "as_expected": true,
+      "feature_distance": null,
+      "reasons": [
+        "It is a colour image; MRI slices are greyscale."
+      ]
+    },
+    {
+      "probe": "portrait photo, greyscale",
+      "expected": "refuse",
+      "outcome": "refused: feature distance",
+      "as_expected": true,
+      "feature_distance": 20.92,
+      "reasons": [
+        "It does not resemble the MRI slices the model was trained on (feature distance 20.9 > 17.2)."
+      ]
+    },
+    {
+      "probe": "product photo",
+      "expected": "refuse",
+      "outcome": "refused: rules",
+      "as_expected": true,
+      "feature_distance": null,
+      "reasons": [
+        "It is a colour image; MRI slices are greyscale."
+      ]
+    },
+    {
+      "probe": "matplotlib logo",
+      "expected": "refuse",
+      "outcome": "refused: rules",
+      "as_expected": true,
+      "feature_distance": null,
+      "reasons": [
+        "It is a colour image; MRI slices are greyscale.",
+        "Its shape (4.2:1) is far from the roughly square MRI slices."
+      ]
+    },
+    {
+      "probe": "terrain elevation map",
+      "expected": "refuse",
+      "outcome": "refused: feature distance",
+      "as_expected": true,
+      "feature_distance": 20.77,
+      "reasons": [
+        "It does not resemble the MRI slices the model was trained on (feature distance 20.8 > 17.2)."
+      ]
+    },
+    {
+      "probe": "random noise",
+      "expected": "refuse",
+      "outcome": "refused: rules",
+      "as_expected": true,
+      "feature_distance": null,
+      "reasons": [
+        "Its edges are bright (mean 127/255); MRI slices sit on a black background."
+      ]
+    },
+    {
+      "probe": "dark random noise",
+      "expected": "refuse",
+      "outcome": "refused: rules",
+      "as_expected": true,
+      "feature_distance": null,
+      "reasons": [
+        "It is almost uniform (no visible structure)."
+      ]
+    },
+    {
+      "probe": "blank grey image",
+      "expected": "refuse",
+      "outcome": "refused: rules",
+      "as_expected": true,
+      "feature_distance": null,
+      "reasons": [
+        "It is almost uniform (no visible structure).",
+        "Its edges are bright (mean 128/255); MRI slices sit on a black background."
+      ]
+    },
+    {
+      "probe": "brain MRI from another source (matplotlib s1045)",
+      "expected": "accept",
+      "outcome": "accepted",
+      "as_expected": true,
+      "feature_distance": 9.59,
+      "reasons": []
+    },
+    {
+      "probe": "BRISC test slice rotated 90 degrees",
+      "expected": "accept",
+      "outcome": "accepted",
+      "as_expected": true,
+      "feature_distance": 7.06,
+      "reasons": []
+    }
+  ]
+}

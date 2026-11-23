@@ -1,0 +1,170 @@
+{
+  "architecture": "cnn",
+  "class_names": [
+    "glioma",
+    "meningioma",
+    "pituitary",
+    "no_tumor"
+  ],
+  "preprocessing": {
+    "image_size": 128,
+    "resample": "bilinear",
+    "channels": 1,
+    "padding": "letterbox-black",
+    "normalization": "divide-by-255"
+  },
+  "parameters": 295188,
+  "framework": {
+    "tensorflow": "2.20.0",
+    "keras": "3.15.1"
+  },
+  "training": {
+    "smoke": false,
+    "seed": 42,
+    "epochs_run": 24,
+    "best_epoch": 16,
+    "duration_seconds": 2943.7,
+    "class_weights": {
+      "glioma": 1.0457856399583767,
+      "meningioma": 0.9626436781609196,
+      "pituitary": 0.8395989974937343,
+      "no_tumor": 1.228606356968215
+    },
+    "train_images": 4020,
+    "validation_images": 868,
+    "train_class_counts": {
+      "glioma": 961,
+      "meningioma": 1044,
+      "pituitary": 1197,
+      "no_tumor": 818
+    },
+    "hyperparameters": {
+      "architecture": "cnn",
+      "batch_size": 32,
+      "max_epochs": 40,
+      "learning_rate": 0.001,
+      "early_stopping_patience": 8,
+      "reduce_lr_patience": 3,
+      "monitor": "val_macro_f1",
+      "class_weighting": "balanced",
+      "smoke": {
+        "max_epochs": 2,
+        "samples_per_class": 24
+      }
+    },
+    "augmentation": {
+      "horizontal_flip": true,
+      "rotation_degrees": 10,
+      "zoom": 0.1,
+      "translation": 0.05,
+      "contrast": 0.1,
+      "brightness": 0.1
+    }
+  },
+  "dataset": {
+    "dataset_version": "brisc2025-clean-v1",
+    "base_dataset_version": "brisc2025-clean-v1",
+    "train_fingerprint": "853fc3ae3d5fd776787a4d1154cc0597b192b67625d170fce2d9b563c782ab91",
+    "validation_fingerprint": "a60f234e5d8bd86ace6d25b752043de4c8680b9d121ff8a9ba3eaaed14047733",
+    "base_train_images": 4020,
+    "uploaded_images": 0,
+    "upload_ids": []
+  },
+  "validation_metrics": {
+    "samples": 868,
+    "accuracy": 0.923963133640553,
+    "balanced_accuracy": 0.9325955537598869,
+    "macro_f1": 0.9301967017028034,
+    "weighted_f1": 0.9247002521721229,
+    "per_class": {
+      "glioma": {
+        "precision": 0.9849246231155779,
+        "recall": 0.9468599033816425,
+        "f1": 0.9655172413793104,
+        "support": 207
+      },
+      "meningioma": {
+        "precision": 0.7892857142857143,
+        "recall": 0.9822222222222222,
+        "f1": 0.8752475247524752,
+        "support": 225
+      },
+      "pituitary": {
+        "precision": 0.9952380952380953,
+        "recall": 0.806949806949807,
+        "f1": 0.8912579957356077,
+        "support": 259
+      },
+      "no_tumor": {
+        "precision": 0.9832402234636871,
+        "recall": 0.9943502824858758,
+        "f1": 0.9887640449438202,
+        "support": 177
+      }
+    },
+    "confusion_matrix": [
+      [
+        196,
+        9,
+        1,
+        1
+      ],
+      [
+        2,
+        221,
+        0,
+        2
+      ],
+      [
+        1,
+        49,
+        209,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        176
+      ]
+    ],
+    "class_order": [
+      "glioma",
+      "meningioma",
+      "pituitary",
+      "no_tumor"
+    ],
+    "log_loss": 0.21635526418685913,
+    "expected_calibration_error": 0.0193333708882881,
+    "tumor_detection": {
+      "sensitivity": 0.9956584659913169,
+      "specificity": 0.9943502824858758,
+      "accuracy": 0.9953917050691244,
+      "false_negatives": 3,
+      "false_positives": 1
+    },
+    "macro_roc_auc_ovr": 0.9952849087817597
+  },
+  "version": "v002",
+  "registered_at": "2026-11-21T10:58:34+00:00",
+  "artifacts": {
+    "model.keras": {
+      "file": "model.keras",
+      "sha256": "851d0e06e0e26f1e7ec9513dc122f008e9f4fa8467ffe3e67676c0d1e795eed1"
+    },
+    "model.h5": {
+      "file": "model.h5",
+      "sha256": "eaabf5ba3547fea73c8102e979e7c5b676e22bedee59e2f20d7ae044a9ab1aea"
+    }
+  },
+  "reload_check": {
+    "model.keras": {
+      "max_abs_difference": 0.0,
+      "probe_images": 16
+    },
+    "model.h5": {
+      "max_abs_difference": 0.0,
+      "probe_images": 16
+    }
+  }
+}

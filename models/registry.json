@@ -1,0 +1,49 @@
+{
+  "active": "v002",
+  "activations": [
+    {
+      "version": "v002",
+      "previous": null,
+      "at": "2026-11-21T10:58:34+00:00",
+      "reason": "initial training run via scripts/train_model.py"
+    },
+    {
+      "version": "v003",
+      "previous": "v002",
+      "at": "2026-11-21T12:33:33+00:00",
+      "reason": "manual activation: demo: admin override to show hot swap and rollback"
+    },
+    {
+      "version": "v002",
+      "previous": "v003",
+      "at": "2026-11-21T12:33:39+00:00",
+      "reason": "rollback: demo: v003 failed the meningioma-recall promotion rule"
+    }
+  ],
+  "versions": {
+    "v001": {
+      "registered_at": "2026-11-21T10:08:36+00:00",
+      "architecture": "baseline",
+      "dataset_version": "brisc2025-clean-v1",
+      "validation_macro_f1": 0.6783738422779899,
+      "job_id": null,
+      "status": "candidate"
+    },
+    "v002": {
+      "registered_at": "2026-11-21T10:58:34+00:00",
+      "architecture": "cnn",
+      "dataset_version": "brisc2025-clean-v1",
+      "validation_macro_f1": 0.9301967017028034,
+      "job_id": null,
+      "status": "active"
+    },
+    "v003": {
+      "registered_at": "2026-11-21T12:32:50+00:00",
+      "architecture": "cnn",
+      "dataset_version": "brisc2025-clean-v1+uploads-4aecbec620",
+      "validation_macro_f1": 0.954794956318675,
+      "job_id": "a78ad55b9d65",
+      "status": "previous"
+    }
+  }
+}

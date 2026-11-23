@@ -1,0 +1,21 @@
+# HTTPS entry point for the Azure VM. Caddy obtains and renews a Let's Encrypt
+# certificate automatically for {$SITE_HOST} (e.g. <dns-label>.<region>.cloudapp.azure.com).
+{$SITE_HOST} {
+	encode gzip
+
+	# API (through the nginx load balancer) under /api/...
+	handle_path /api/* {
+		reverse_proxy gateway:8000
+	}
+
+	# Optional extra gate for the whole site during assessment: set BASIC_AUTH_USER and
+	# BASIC_AUTH_HASH (generate with: docker run --rm caddy:2 caddy hash-password).
+	# basic_auth {
+	# 	{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	# }
+
+	# Streamlit UI (needs websockets, which reverse_proxy supports by default)
+	handle {
+		reverse_proxy ui:8501
+	}
+}

@@ -1,0 +1,121 @@
+{
+  "dataset_version": "brisc2025-clean-v1",
+  "created_at": "2026-11-21T10:59:55+00:00",
+  "source": "BRISC 2025 \u2014 Fateh et al., Scientific Data 13, 361 (2026), doi:10.1038/s41597-026-06753-y; Kaggle briscdataset/brisc2025 (stated licence CC BY 4.0)",
+  "archive": {
+    "filename": "archive (6).zip",
+    "bytes": 262284213,
+    "sha256": "edc2295d0eb6be19aa4ecee74974db0efbb5e088ddcdfde5229e3e2bfb0d010b"
+  },
+  "manifest_checks": {
+    "sidecar_checksums_match": {
+      "manifest.csv": true,
+      "manifest.json": true
+    },
+    "csv_and_json_agree": true,
+    "issues": 0
+  },
+  "counts": {
+    "classification_files": 6000,
+    "by_label": {
+      "glioma": 1401,
+      "meningioma": 1635,
+      "no_tumor": 1207,
+      "pituitary": 1757
+    },
+    "by_original_split": {
+      "test": 1000,
+      "train": 5000
+    },
+    "decoded_and_checksum_ok": 6000,
+    "rejected_by_reason": {
+      "exact_duplicate": 144
+    },
+    "exact_duplicate_groups": 134,
+    "exact_groups_crossing_original_split": 98,
+    "exact_groups_with_conflicting_labels": 0,
+    "retained_unique_images": 5856,
+    "meets_minimum_unique_images": true,
+    "similar_pairs_by_kind": {
+      "near_duplicate": 46,
+      "related": 1311,
+      "review": 1497
+    },
+    "linked_groups": 647,
+    "images_in_linked_groups": 1930,
+    "largest_linked_group": 9,
+    "linked_groups_with_label_conflicts": 0
+  },
+  "splits": {
+    "train": {
+      "glioma": 961,
+      "meningioma": 1044,
+      "no_tumor": 818,
+      "pituitary": 1197
+    },
+    "validation": {
+      "glioma": 207,
+      "meningioma": 225,
+      "no_tumor": 177,
+      "pituitary": 259
+    },
+    "test": {
+      "glioma": 207,
+      "meningioma": 225,
+      "no_tumor": 177,
+      "pituitary": 259
+    },
+    "retrain_demo": {
+      "glioma": 25,
+      "meningioma": 25,
+      "no_tumor": 25,
+      "pituitary": 25
+    }
+  },
+  "split_totals": {
+    "train": 4020,
+    "validation": 868,
+    "test": 868,
+    "retrain_demo": 100
+  },
+  "segmentation_task": {
+    "segmentation_images": 4793,
+    "segmentation_masks": 4793,
+    "images_identical_to_classification": 4793
+  },
+  "config": {
+    "dataset": {
+      "version": "brisc2025-clean-v1",
+      "archive_root": "brisc2025",
+      "source": "BRISC 2025 \u2014 Fateh et al., Scientific Data 13, 361 (2026), doi:10.1038/s41597-026-06753-y; Kaggle briscdataset/brisc2025 (stated licence CC BY 4.0)",
+      "seed": 42,
+      "retrain_demo_per_class": 25,
+      "validation_fraction": 0.15,
+      "test_fraction": 0.15
+    },
+    "duplicates": {
+      "thumbnail_size": 64,
+      "near_duplicate": {
+        "max_hamming": 12,
+        "min_correlation": 0.98
+      },
+      "related": {
+        "max_hamming": 8,
+        "min_correlation": 0.93
+      },
+      "review": {
+        "max_hamming": 10,
+        "min_correlation": 0.9
+      }
+    },
+    "preprocessing": {
+      "image_size": 128,
+      "resample": "bilinear"
+    }
+  },
+  "limitations": [
+    "No patient identifiers are provided, so patient-level separation between splits cannot be guaranteed; linking near-duplicates and similar neighbouring slices reduces but does not eliminate this risk.",
+    "Clinical label accuracy has not been independently verified.",
+    "No explicit licence file is included in the archive; see README 'Dataset licence and attribution'."
+  ]
+}

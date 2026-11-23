@@ -1,0 +1,29 @@
+{
+  "status_code": 200,
+  "counts": {
+    "rejected": 2,
+    "duplicate": 1
+  },
+  "items": [
+    {
+      "original_name": "from_test_split.jpg",
+      "status": "rejected",
+      "reason": "Evaluation leakage risk: exact match with test image brisc2025_test_00007_gl_ax_t1 (hash distance 0, r=1.000)."
+    },
+    {
+      "original_name": "from_train_split.jpg",
+      "status": "duplicate",
+      "reason": "Already in the training set as brisc2025_test_00001_gl_ax_t1."
+    },
+    {
+      "original_name": "fake.jpg",
+      "status": "rejected",
+      "reason": "File content is not a recognised image."
+    }
+  ],
+  "without_admin_key": 401,
+  "retrain_before_any_admission": [
+    400,
+    "Admit at least one reviewed upload before retraining."
+  ]
+}

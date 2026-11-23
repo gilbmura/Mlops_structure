@@ -1,0 +1,71 @@
+{
+  "http_status": 200,
+  "training_pool_unchanged": true,
+  "report": {
+    "total_files": 4,
+    "predicted_files": 2,
+    "rejected_files": 2,
+    "model_version": "v002",
+    "items": [
+      {
+        "filename": "scan.jpg",
+        "status": "predicted",
+        "prediction": {
+          "accepted": true,
+          "message": "Tumor detected \u2014 predicted type: glioma.",
+          "model_version": "v002",
+          "predicted_class": "glioma",
+          "tumor_detected": true,
+          "confidence": 0.9819,
+          "low_confidence": false,
+          "probabilities": {
+            "glioma": 0.9819,
+            "meningioma": 0.0161,
+            "pituitary": 0.0013,
+            "no_tumor": 0.0006
+          },
+          "rejection_reasons": [],
+          "feature_distance": 7.28,
+          "disclaimer": "Educational prototype, not a diagnostic service. The confidence is the model's softmax score for its top class; it is not a clinical probability or a guarantee. Input checks refuse many images that are not brain MRI slices, but they cannot guarantee that an accepted image is one."
+        },
+        "reason": null
+      },
+      {
+        "filename": "folder/second.jpg",
+        "status": "predicted",
+        "prediction": {
+          "accepted": true,
+          "message": "Tumor detected \u2014 predicted type: glioma.",
+          "model_version": "v002",
+          "predicted_class": "glioma",
+          "tumor_detected": true,
+          "confidence": 0.9819,
+          "low_confidence": false,
+          "probabilities": {
+            "glioma": 0.9819,
+            "meningioma": 0.0161,
+            "pituitary": 0.0013,
+            "no_tumor": 0.0006
+          },
+          "rejection_reasons": [],
+          "feature_distance": 7.28,
+          "disclaimer": "Educational prototype, not a diagnostic service. The confidence is the model's softmax score for its top class; it is not a clinical probability or a guarantee. Input checks refuse many images that are not brain MRI slices, but they cannot guarantee that an accepted image is one."
+        },
+        "reason": null
+      },
+      {
+        "filename": "bad.jpg",
+        "status": "rejected",
+        "prediction": null,
+        "reason": "File content is not a recognised image."
+      },
+      {
+        "filename": "colour.png",
+        "status": "rejected",
+        "prediction": null,
+        "reason": "This doesn't look like a brain MRI slice, so no prediction is shown. It is a colour image; MRI slices are greyscale. It is almost uniform (no visible structure)."
+      }
+    ],
+    "disclaimer": "Educational prototype, not a diagnostic service. The confidence is the model's softmax score for its top class; it is not a clinical probability or a guarantee. Input checks refuse many images that are not brain MRI slices, but they cannot guarantee that an accepted image is one."
+  }
+}

@@ -1,0 +1,15 @@
+# Local rehearsal of the Azure stack (optional, before deploying):
+# Caddy serves https://localhost:8443 with its own local certificate instead of a
+# Let's Encrypt certificate on ports 80/443. Everything else is the Azure configuration.
+#
+#   $env:SITE_HOST = "localhost:8443"
+#   docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml -f deploy/azure/docker-compose.rehearsal.yml up -d
+#
+# Browsers will warn about the local certificate. Return to the normal local stack with:
+#   docker compose up -d --remove-orphans
+services:
+  caddy:
+    ports: !override
+      - "8443:8443"
+    environment:
+      SITE_HOST: "localhost:8443"

@@ -1,0 +1,5 @@
+{
+  "conflict_status": 409,
+  "conflict_detail": "A retrain job is already running (a78ad55b9d65).",
+  "predict_during_training": 200
+}

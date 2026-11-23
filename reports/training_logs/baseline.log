@@ -1,0 +1,58 @@
+2026-11-21 11:58:28,607 INFO src.training: Training baseline from scratch: 4020 train / 868 validation images, up to 40 epochs
+2026-11-21 11:58:46,201 INFO src.training: epoch 1: accuracy=0.3025 learning_rate=0.0010 loss=1.3692 macro_f1=0.3016 val_accuracy=0.4793 val_loss=1.3183 val_macro_f1=0.4185
+2026-11-21 11:59:03,655 INFO src.training: epoch 2: accuracy=0.3985 learning_rate=0.0010 loss=1.3127 macro_f1=0.3680 val_accuracy=0.3894 val_loss=1.2689 val_macro_f1=0.3467
+2026-11-21 11:59:24,970 INFO src.training: epoch 3: accuracy=0.4396 learning_rate=0.0010 loss=1.2674 macro_f1=0.4099 val_accuracy=0.5300 val_loss=1.1781 val_macro_f1=0.4643
+2026-11-21 11:59:41,815 INFO src.training: epoch 4: accuracy=0.4627 learning_rate=0.0010 loss=1.2212 macro_f1=0.4297 val_accuracy=0.5565 val_loss=1.1288 val_macro_f1=0.5187
+2026-11-21 11:59:57,890 INFO src.training: epoch 5: accuracy=0.4828 learning_rate=0.0010 loss=1.1751 macro_f1=0.4610 val_accuracy=0.5772 val_loss=1.0636 val_macro_f1=0.5399
+2026-11-21 12:00:08,118 INFO src.training: epoch 6: accuracy=0.5075 learning_rate=0.0010 loss=1.1423 macro_f1=0.4831 val_accuracy=0.5703 val_loss=1.0466 val_macro_f1=0.5017
+2026-11-21 12:00:26,769 INFO src.training: epoch 7: accuracy=0.5134 learning_rate=0.0010 loss=1.1167 macro_f1=0.4903 val_accuracy=0.5968 val_loss=1.0245 val_macro_f1=0.5734
+2026-11-21 12:00:37,630 INFO src.training: epoch 8: accuracy=0.5164 learning_rate=0.0010 loss=1.1080 macro_f1=0.4951 val_accuracy=0.5945 val_loss=1.0277 val_macro_f1=0.5719
+2026-11-21 12:00:47,876 INFO src.training: epoch 9: accuracy=0.5274 learning_rate=0.0010 loss=1.0908 macro_f1=0.5083 val_accuracy=0.5726 val_loss=1.0049 val_macro_f1=0.5287
+2026-11-21 12:01:01,719 INFO src.training: epoch 10: accuracy=0.5266 learning_rate=0.0010 loss=1.0979 macro_f1=0.5118 val_accuracy=0.5899 val_loss=1.0024 val_macro_f1=0.5445
+2026-11-21 12:01:20,099 INFO src.training: epoch 11: accuracy=0.5475 learning_rate=0.0010 loss=1.0859 macro_f1=0.5283 val_accuracy=0.6233 val_loss=0.9810 val_macro_f1=0.6133
+2026-11-21 12:01:30,952 INFO src.training: epoch 12: accuracy=0.5535 learning_rate=0.0010 loss=1.0780 macro_f1=0.5415 val_accuracy=0.6256 val_loss=0.9749 val_macro_f1=0.6113
+2026-11-21 12:01:45,708 INFO src.training: epoch 13: accuracy=0.5505 learning_rate=0.0010 loss=1.0743 macro_f1=0.5385 val_accuracy=0.6244 val_loss=0.9634 val_macro_f1=0.6124
+2026-11-21 12:01:56,712 INFO src.training: epoch 14: accuracy=0.5520 learning_rate=0.0010 loss=1.0732 macro_f1=0.5390 val_accuracy=0.6221 val_loss=0.9609 val_macro_f1=0.6031
+2026-11-21 12:02:24,602 INFO src.training: epoch 15: accuracy=0.5572 learning_rate=0.0010 loss=1.0594 macro_f1=0.5450 val_accuracy=0.6417 val_loss=0.9497 val_macro_f1=0.6325
+2026-11-21 12:02:38,855 INFO src.training: epoch 16: accuracy=0.5577 learning_rate=0.0010 loss=1.0661 macro_f1=0.5477 val_accuracy=0.5714 val_loss=1.0116 val_macro_f1=0.5260
+2026-11-21 12:02:47,681 INFO src.training: epoch 17: accuracy=0.5706 learning_rate=0.0010 loss=1.0519 macro_f1=0.5618 val_accuracy=0.6210 val_loss=0.9399 val_macro_f1=0.5918
+2026-11-21 12:02:57,778 INFO src.training: epoch 18: accuracy=0.5669 learning_rate=0.0010 loss=1.0466 macro_f1=0.5577 val_accuracy=0.6175 val_loss=0.9525 val_macro_f1=0.6005
+2026-11-21 12:03:22,948 INFO src.training: epoch 19: accuracy=0.5709 learning_rate=0.0010 loss=1.0503 macro_f1=0.5613 val_accuracy=0.6498 val_loss=0.9362 val_macro_f1=0.6414
+2026-11-21 12:03:50,448 INFO src.training: epoch 20: accuracy=0.5769 learning_rate=0.0010 loss=1.0425 macro_f1=0.5682 val_accuracy=0.6210 val_loss=0.9378 val_macro_f1=0.5941
+2026-11-21 12:04:09,780 INFO src.training: epoch 21: accuracy=0.5831 learning_rate=0.0010 loss=1.0347 macro_f1=0.5774 val_accuracy=0.6544 val_loss=0.9218 val_macro_f1=0.6513
+2026-11-21 12:04:22,661 INFO src.training: epoch 22: accuracy=0.5716 learning_rate=0.0010 loss=1.0341 macro_f1=0.5634 val_accuracy=0.6440 val_loss=0.9380 val_macro_f1=0.6324
+2026-11-21 12:04:35,520 INFO src.training: epoch 23: accuracy=0.5746 learning_rate=0.0010 loss=1.0317 macro_f1=0.5665 val_accuracy=0.6267 val_loss=0.9555 val_macro_f1=0.6123
+2026-11-21 12:04:54,955 INFO src.training: epoch 24: accuracy=0.5866 learning_rate=0.0010 loss=1.0224 macro_f1=0.5804 val_accuracy=0.6348 val_loss=0.9184 val_macro_f1=0.6203
+2026-11-21 12:05:07,314 INFO src.training: epoch 25: accuracy=0.5796 learning_rate=0.0010 loss=1.0318 macro_f1=0.5739 val_accuracy=0.6175 val_loss=0.9585 val_macro_f1=0.5901
+2026-11-21 12:05:27,351 INFO src.training: epoch 26: accuracy=0.5883 learning_rate=0.0010 loss=1.0153 macro_f1=0.5849 val_accuracy=0.6094 val_loss=0.9416 val_macro_f1=0.5868
+2026-11-21 12:05:39,551 INFO src.training: epoch 27: accuracy=0.5955 learning_rate=0.0010 loss=1.0076 macro_f1=0.5913 val_accuracy=0.6440 val_loss=0.9252 val_macro_f1=0.6346
+2026-11-21 12:05:54,626 INFO src.training: epoch 28: accuracy=0.6040 learning_rate=0.0005 loss=1.0010 macro_f1=0.6000 val_accuracy=0.6567 val_loss=0.8913 val_macro_f1=0.6492
+2026-11-21 12:06:06,682 INFO src.training: epoch 29: accuracy=0.5988 learning_rate=0.0005 loss=1.0038 macro_f1=0.5961 val_accuracy=0.6590 val_loss=0.9045 val_macro_f1=0.6559
+2026-11-21 12:06:17,739 INFO src.training: epoch 30: accuracy=0.6134 learning_rate=0.0005 loss=0.9953 macro_f1=0.6119 val_accuracy=0.6624 val_loss=0.8927 val_macro_f1=0.6555
+2026-11-21 12:06:40,447 INFO src.training: epoch 31: accuracy=0.6137 learning_rate=0.0005 loss=0.9856 macro_f1=0.6098 val_accuracy=0.6682 val_loss=0.8821 val_macro_f1=0.6686
+2026-11-21 12:06:58,401 INFO src.training: epoch 32: accuracy=0.6015 learning_rate=0.0005 loss=0.9925 macro_f1=0.5987 val_accuracy=0.6567 val_loss=0.9101 val_macro_f1=0.6519
+2026-11-21 12:07:09,443 INFO src.training: epoch 33: accuracy=0.6077 learning_rate=0.0005 loss=0.9956 macro_f1=0.6056 val_accuracy=0.6694 val_loss=0.8919 val_macro_f1=0.6687
+2026-11-21 12:07:17,618 INFO src.training: epoch 34: accuracy=0.6080 learning_rate=0.0005 loss=0.9926 macro_f1=0.6038 val_accuracy=0.6682 val_loss=0.8822 val_macro_f1=0.6640
+2026-11-21 12:07:29,047 INFO src.training: epoch 35: accuracy=0.6172 learning_rate=0.0003 loss=0.9819 macro_f1=0.6146 val_accuracy=0.6486 val_loss=0.9157 val_macro_f1=0.6364
+2026-11-21 12:07:43,553 INFO src.training: epoch 36: accuracy=0.6112 learning_rate=0.0003 loss=0.9678 macro_f1=0.6059 val_accuracy=0.6717 val_loss=0.8861 val_macro_f1=0.6702
+2026-11-21 12:07:55,113 INFO src.training: epoch 37: accuracy=0.6157 learning_rate=0.0003 loss=0.9841 macro_f1=0.6151 val_accuracy=0.6452 val_loss=0.8915 val_macro_f1=0.6316
+2026-11-21 12:08:07,056 INFO src.training: epoch 38: accuracy=0.6236 learning_rate=0.0001 loss=0.9681 macro_f1=0.6209 val_accuracy=0.6705 val_loss=0.8777 val_macro_f1=0.6685
+2026-11-21 12:08:21,037 INFO src.training: epoch 39: accuracy=0.6201 learning_rate=0.0001 loss=0.9776 macro_f1=0.6188 val_accuracy=0.6578 val_loss=0.8881 val_macro_f1=0.6512
+2026-11-21 12:08:31,119 INFO src.training: epoch 40: accuracy=0.6274 learning_rate=0.0001 loss=0.9737 macro_f1=0.6236 val_accuracy=0.6786 val_loss=0.8838 val_macro_f1=0.6784
+2026-11-21 12:08:34,887 INFO src.pipeline: Validation macro-F1 0.6784, accuracy 0.6786
+2026-11-21 12:08:35,336 WARNING absl: You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2026-11-21 12:08:36,531 INFO src.registry: Registered model v001
+{
+  "version": "v001",
+  "registry": "D:\\ALU_Trials\\Mlops_structure\\models",
+  "activated": false,
+  "epochs_run": 40,
+  "best_epoch": 40,
+  "duration_seconds": 602.6,
+  "validation": {
+    "accuracy": 0.6785714285714286,
+    "balanced_accuracy": 0.6725844541246162,
+    "macro_f1": 0.6783738422779899,
+    "weighted_f1": 0.6782948737170191
+  }
+}

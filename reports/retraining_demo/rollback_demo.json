@@ -1,0 +1,55 @@
+[
+  {
+    "step": "before",
+    "serving": "v002"
+  },
+  {
+    "step": "manual activate v003",
+    "status": 200,
+    "response": {
+      "active_version": "v003"
+    }
+  },
+  {
+    "step": "after activation (replica hot-swapped)",
+    "serving": "v003"
+  },
+  {
+    "step": "rollback",
+    "status": 200,
+    "response": {
+      "active_version": "v002"
+    }
+  },
+  {
+    "step": "after rollback",
+    "serving": "v002"
+  },
+  {
+    "step": "rollback without admin key",
+    "status": 401
+  },
+  {
+    "step": "activation history",
+    "activations": [
+      {
+        "version": "v002",
+        "previous": null,
+        "at": "2026-11-21T10:58:34+00:00",
+        "reason": "initial training run via scripts/train_model.py"
+      },
+      {
+        "version": "v003",
+        "previous": "v002",
+        "at": "2026-11-21T12:33:33+00:00",
+        "reason": "manual activation: demo: admin override to show hot swap and rollback"
+      },
+      {
+        "version": "v002",
+        "previous": "v003",
+        "at": "2026-11-21T12:33:39+00:00",
+        "reason": "rollback: demo: v003 failed the meningioma-recall promotion rule"
+      }
+    ]
+  }
+]

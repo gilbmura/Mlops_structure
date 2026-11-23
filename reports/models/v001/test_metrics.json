@@ -1,0 +1,79 @@
+{
+  "samples": 868,
+  "accuracy": 0.6324884792626728,
+  "balanced_accuracy": 0.6250209521027501,
+  "macro_f1": 0.6295626155115991,
+  "weighted_f1": 0.6299169840005114,
+  "per_class": {
+    "glioma": {
+      "precision": 0.8018018018018018,
+      "recall": 0.42995169082125606,
+      "f1": 0.559748427672956,
+      "support": 207
+    },
+    "meningioma": {
+      "precision": 0.4642857142857143,
+      "recall": 0.5777777777777777,
+      "f1": 0.5148514851485149,
+      "support": 225
+    },
+    "pituitary": {
+      "precision": 0.6624203821656051,
+      "recall": 0.803088803088803,
+      "f1": 0.7260034904013961,
+      "support": 259
+    },
+    "no_tumor": {
+      "precision": 0.7484662576687117,
+      "recall": 0.6892655367231638,
+      "f1": 0.7176470588235294,
+      "support": 177
+    }
+  },
+  "confusion_matrix": [
+    [
+      89,
+      82,
+      27,
+      9
+    ],
+    [
+      11,
+      130,
+      53,
+      31
+    ],
+    [
+      8,
+      42,
+      208,
+      1
+    ],
+    [
+      3,
+      26,
+      26,
+      122
+    ]
+  ],
+  "class_order": [
+    "glioma",
+    "meningioma",
+    "pituitary",
+    "no_tumor"
+  ],
+  "log_loss": 0.933692216873169,
+  "expected_calibration_error": 0.08581804748504393,
+  "tumor_detection": {
+    "sensitivity": 0.9406657018813314,
+    "specificity": 0.6892655367231638,
+    "accuracy": 0.8894009216589862,
+    "false_negatives": 41,
+    "false_positives": 55
+  },
+  "macro_roc_auc_ovr": 0.8505791761582717,
+  "version": "v001",
+  "split": "test",
+  "artifact": "model.keras",
+  "evaluated_at": "2026-11-21T11:01:21+00:00"
+}

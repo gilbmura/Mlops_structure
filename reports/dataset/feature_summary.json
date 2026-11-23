@@ -1,0 +1,579 @@
+{
+  "split": "train",
+  "images": 4020,
+  "features": {
+    "brightness": "Mean foreground intensity (0-255)",
+    "contrast": "Std. dev. of foreground intensity",
+    "texture": "Mean gradient magnitude in foreground",
+    "entropy": "Foreground intensity entropy (bits)",
+    "foreground_fraction": "Share of non-background pixels",
+    "whole_image_mean": "Mean intensity incl. background"
+  },
+  "summary": [
+    {
+      "feature": "brightness",
+      "class": "glioma",
+      "median": 68.015,
+      "q1": 61.834,
+      "q3": 74.614,
+      "mean": 68.493,
+      "std": 10.138,
+      "n": 961
+    },
+    {
+      "feature": "brightness",
+      "class": "meningioma",
+      "median": 79.484,
+      "q1": 73.288,
+      "q3": 88.213,
+      "mean": 82.504,
+      "std": 14.274,
+      "n": 1044
+    },
+    {
+      "feature": "brightness",
+      "class": "no_tumor",
+      "median": 88.528,
+      "q1": 81.492,
+      "q3": 97.749,
+      "mean": 91.03,
+      "std": 16.817,
+      "n": 818
+    },
+    {
+      "feature": "brightness",
+      "class": "pituitary",
+      "median": 73.517,
+      "q1": 67.931,
+      "q3": 78.445,
+      "mean": 73.117,
+      "std": 8.052,
+      "n": 1197
+    },
+    {
+      "feature": "contrast",
+      "class": "glioma",
+      "median": 27.663,
+      "q1": 23.82,
+      "q3": 31.09,
+      "mean": 27.336,
+      "std": 5.387,
+      "n": 961
+    },
+    {
+      "feature": "contrast",
+      "class": "meningioma",
+      "median": 32.852,
+      "q1": 29.949,
+      "q3": 36.684,
+      "mean": 34.218,
+      "std": 7.113,
+      "n": 1044
+    },
+    {
+      "feature": "contrast",
+      "class": "no_tumor",
+      "median": 34.426,
+      "q1": 29.952,
+      "q3": 39.888,
+      "mean": 36.43,
+      "std": 9.293,
+      "n": 818
+    },
+    {
+      "feature": "contrast",
+      "class": "pituitary",
+      "median": 29.185,
+      "q1": 26.905,
+      "q3": 31.604,
+      "mean": 29.267,
+      "std": 3.95,
+      "n": 1197
+    },
+    {
+      "feature": "texture",
+      "class": "glioma",
+      "median": 13.644,
+      "q1": 12.083,
+      "q3": 14.9,
+      "mean": 13.454,
+      "std": 2.166,
+      "n": 961
+    },
+    {
+      "feature": "texture",
+      "class": "meningioma",
+      "median": 15.384,
+      "q1": 14.223,
+      "q3": 16.788,
+      "mean": 15.801,
+      "std": 2.662,
+      "n": 1044
+    },
+    {
+      "feature": "texture",
+      "class": "no_tumor",
+      "median": 18.202,
+      "q1": 15.821,
+      "q3": 20.562,
+      "mean": 18.451,
+      "std": 4.078,
+      "n": 818
+    },
+    {
+      "feature": "texture",
+      "class": "pituitary",
+      "median": 14.16,
+      "q1": 13.094,
+      "q3": 15.253,
+      "mean": 14.204,
+      "std": 1.803,
+      "n": 1197
+    },
+    {
+      "feature": "entropy",
+      "class": "glioma",
+      "median": 4.522,
+      "q1": 4.22,
+      "q3": 4.745,
+      "mean": 4.444,
+      "std": 0.42,
+      "n": 961
+    },
+    {
+      "feature": "entropy",
+      "class": "meningioma",
+      "median": 4.847,
+      "q1": 4.684,
+      "q3": 5.03,
+      "mean": 4.856,
+      "std": 0.282,
+      "n": 1044
+    },
+    {
+      "feature": "entropy",
+      "class": "no_tumor",
+      "median": 4.959,
+      "q1": 4.792,
+      "q3": 5.121,
+      "mean": 4.953,
+      "std": 0.297,
+      "n": 818
+    },
+    {
+      "feature": "entropy",
+      "class": "pituitary",
+      "median": 4.633,
+      "q1": 4.501,
+      "q3": 4.762,
+      "mean": 4.622,
+      "std": 0.214,
+      "n": 1197
+    },
+    {
+      "feature": "foreground_fraction",
+      "class": "glioma",
+      "median": 0.46,
+      "q1": 0.395,
+      "q3": 0.531,
+      "mean": 0.467,
+      "std": 0.098,
+      "n": 961
+    },
+    {
+      "feature": "foreground_fraction",
+      "class": "meningioma",
+      "median": 0.498,
+      "q1": 0.41,
+      "q3": 0.573,
+      "mean": 0.495,
+      "std": 0.117,
+      "n": 1044
+    },
+    {
+      "feature": "foreground_fraction",
+      "class": "no_tumor",
+      "median": 0.463,
+      "q1": 0.346,
+      "q3": 0.583,
+      "mean": 0.461,
+      "std": 0.145,
+      "n": 818
+    },
+    {
+      "feature": "foreground_fraction",
+      "class": "pituitary",
+      "median": 0.652,
+      "q1": 0.582,
+      "q3": 0.719,
+      "mean": 0.643,
+      "std": 0.099,
+      "n": 1197
+    },
+    {
+      "feature": "whole_image_mean",
+      "class": "glioma",
+      "median": 32.453,
+      "q1": 26.671,
+      "q3": 39.119,
+      "mean": 33.365,
+      "std": 8.63,
+      "n": 961
+    },
+    {
+      "feature": "whole_image_mean",
+      "class": "meningioma",
+      "median": 40.703,
+      "q1": 34.734,
+      "q3": 46.424,
+      "mean": 42.348,
+      "std": 12.084,
+      "n": 1044
+    },
+    {
+      "feature": "whole_image_mean",
+      "class": "no_tumor",
+      "median": 41.588,
+      "q1": 31.01,
+      "q3": 53.945,
+      "mean": 43.195,
+      "std": 16.303,
+      "n": 818
+    },
+    {
+      "feature": "whole_image_mean",
+      "class": "pituitary",
+      "median": 49.541,
+      "q1": 43.39,
+      "q3": 54.069,
+      "mean": 48.92,
+      "std": 8.396,
+      "n": 1197
+    }
+  ],
+  "class_separation": {
+    "brightness": {
+      "kruskal_h": 1323.94,
+      "p_value": 9.383004723334072e-287,
+      "epsilon_squared": 0.3294
+    },
+    "contrast": {
+      "kruskal_h": 980.35,
+      "p_value": 3.28927917718062e-212,
+      "epsilon_squared": 0.2439
+    },
+    "texture": {
+      "kruskal_h": 1189.2,
+      "p_value": 1.6139014967968815e-257,
+      "epsilon_squared": 0.2959
+    },
+    "entropy": {
+      "kruskal_h": 1187.93,
+      "p_value": 3.0491129902333235e-257,
+      "epsilon_squared": 0.2956
+    },
+    "foreground_fraction": {
+      "kruskal_h": 1307.09,
+      "p_value": 4.26511684158906e-283,
+      "epsilon_squared": 0.3252
+    },
+    "whole_image_mean": {
+      "kruskal_h": 1041.28,
+      "p_value": 1.99709221700806e-225,
+      "epsilon_squared": 0.2591
+    }
+  },
+  "by_plane": [
+    {
+      "feature": "brightness",
+      "plane": "axial",
+      "median": 76.854,
+      "q1": 67.312,
+      "q3": 90.529,
+      "mean": 81.037,
+      "std": 19.742,
+      "n": 1329
+    },
+    {
+      "feature": "brightness",
+      "plane": "coronal",
+      "median": 76.166,
+      "q1": 69.788,
+      "q3": 82.469,
+      "mean": 76.755,
+      "std": 11.298,
+      "n": 1331
+    },
+    {
+      "feature": "brightness",
+      "plane": "sagittal",
+      "median": 75.275,
+      "q1": 68.111,
+      "q3": 84.851,
+      "mean": 76.529,
+      "std": 11.843,
+      "n": 1360
+    },
+    {
+      "feature": "contrast",
+      "plane": "axial",
+      "median": 30.69,
+      "q1": 26.54,
+      "q3": 35.621,
+      "mean": 32.472,
+      "std": 9.925,
+      "n": 1329
+    },
+    {
+      "feature": "contrast",
+      "plane": "coronal",
+      "median": 29.999,
+      "q1": 27.459,
+      "q3": 33.203,
+      "mean": 30.817,
+      "std": 5.961,
+      "n": 1331
+    },
+    {
+      "feature": "contrast",
+      "plane": "sagittal",
+      "median": 31.171,
+      "q1": 28.169,
+      "q3": 34.176,
+      "mean": 31.361,
+      "std": 5.431,
+      "n": 1360
+    },
+    {
+      "feature": "texture",
+      "plane": "axial",
+      "median": 15.5,
+      "q1": 13.398,
+      "q3": 17.706,
+      "mean": 15.918,
+      "std": 3.929,
+      "n": 1329
+    },
+    {
+      "feature": "texture",
+      "plane": "coronal",
+      "median": 14.64,
+      "q1": 13.445,
+      "q3": 16.339,
+      "mean": 15.177,
+      "std": 2.966,
+      "n": 1331
+    },
+    {
+      "feature": "texture",
+      "plane": "sagittal",
+      "median": 14.489,
+      "q1": 13.367,
+      "q3": 15.839,
+      "mean": 14.827,
+      "std": 2.636,
+      "n": 1360
+    },
+    {
+      "feature": "entropy",
+      "plane": "axial",
+      "median": 4.646,
+      "q1": 4.33,
+      "q3": 4.921,
+      "mean": 4.608,
+      "std": 0.477,
+      "n": 1329
+    },
+    {
+      "feature": "entropy",
+      "plane": "coronal",
+      "median": 4.757,
+      "q1": 4.609,
+      "q3": 4.917,
+      "mean": 4.763,
+      "std": 0.269,
+      "n": 1331
+    },
+    {
+      "feature": "entropy",
+      "plane": "sagittal",
+      "median": 4.75,
+      "q1": 4.576,
+      "q3": 4.947,
+      "mean": 4.751,
+      "std": 0.283,
+      "n": 1360
+    },
+    {
+      "feature": "foreground_fraction",
+      "plane": "axial",
+      "median": 0.43,
+      "q1": 0.371,
+      "q3": 0.521,
+      "mean": 0.45,
+      "std": 0.117,
+      "n": 1329
+    },
+    {
+      "feature": "foreground_fraction",
+      "plane": "coronal",
+      "median": 0.509,
+      "q1": 0.429,
+      "q3": 0.617,
+      "mean": 0.512,
+      "std": 0.131,
+      "n": 1331
+    },
+    {
+      "feature": "foreground_fraction",
+      "plane": "sagittal",
+      "median": 0.605,
+      "q1": 0.543,
+      "q3": 0.71,
+      "mean": 0.612,
+      "std": 0.114,
+      "n": 1360
+    },
+    {
+      "feature": "whole_image_mean",
+      "plane": "axial",
+      "median": 34.947,
+      "q1": 28.089,
+      "q3": 43.869,
+      "mean": 38.107,
+      "std": 14.634,
+      "n": 1329
+    },
+    {
+      "feature": "whole_image_mean",
+      "plane": "coronal",
+      "median": 39.339,
+      "q1": 33.084,
+      "q3": 48.649,
+      "mean": 40.657,
+      "std": 11.701,
+      "n": 1331
+    },
+    {
+      "feature": "whole_image_mean",
+      "plane": "sagittal",
+      "median": 47.961,
+      "q1": 42.177,
+      "q3": 54.012,
+      "mean": 48.093,
+      "std": 9.238,
+      "n": 1360
+    }
+  ],
+  "plane_by_class": {
+    "glioma": {
+      "axial": 334,
+      "coronal": 348,
+      "sagittal": 279
+    },
+    "meningioma": {
+      "axial": 341,
+      "coronal": 334,
+      "sagittal": 369
+    },
+    "no_tumor": {
+      "axial": 276,
+      "coronal": 242,
+      "sagittal": 300
+    },
+    "pituitary": {
+      "axial": 378,
+      "coronal": 407,
+      "sagittal": 412
+    }
+  },
+  "source_resolution_by_class": {
+    "glioma": {
+      "512x512": 961,
+      "other": 0
+    },
+    "meningioma": {
+      "512x512": 953,
+      "other": 91
+    },
+    "no_tumor": {
+      "512x512": 262,
+      "other": 556
+    },
+    "pituitary": {
+      "512x512": 1170,
+      "other": 27
+    }
+  },
+  "source_shape_by_class": {
+    "glioma": {
+      "non_square": 0,
+      "square": 961
+    },
+    "meningioma": {
+      "non_square": 83,
+      "square": 961
+    },
+    "no_tumor": {
+      "non_square": 295,
+      "square": 523
+    },
+    "pituitary": {
+      "non_square": 7,
+      "square": 1190
+    }
+  },
+  "median_by_class_and_resolution": {
+    "brightness": {
+      "glioma": {
+        "512x512": 68.015
+      },
+      "meningioma": {
+        "512x512": 78.662,
+        "other": 106.883
+      },
+      "no_tumor": {
+        "512x512": 97.974,
+        "other": 86.665
+      },
+      "pituitary": {
+        "512x512": 73.573,
+        "other": 71.019
+      }
+    },
+    "contrast": {
+      "glioma": {
+        "512x512": 27.663
+      },
+      "meningioma": {
+        "512x512": 32.446,
+        "other": 49.078
+      },
+      "no_tumor": {
+        "512x512": 40.253,
+        "other": 32.865
+      },
+      "pituitary": {
+        "512x512": 29.223,
+        "other": 28.785
+      }
+    },
+    "foreground_fraction": {
+      "glioma": {
+        "512x512": 0.46
+      },
+      "meningioma": {
+        "512x512": 0.49,
+        "other": 0.594
+      },
+      "no_tumor": {
+        "512x512": 0.52,
+        "other": 0.388
+      },
+      "pituitary": {
+        "512x512": 0.648,
+        "other": 0.727
+      }
+    }
+  }
+}

@@ -1,0 +1,274 @@
+{
+  "architecture": "cnn",
+  "class_names": [
+    "glioma",
+    "meningioma",
+    "pituitary",
+    "no_tumor"
+  ],
+  "preprocessing": {
+    "image_size": 128,
+    "resample": "bilinear",
+    "channels": 1,
+    "padding": "letterbox-black",
+    "normalization": "divide-by-255"
+  },
+  "parameters": 295188,
+  "framework": {
+    "tensorflow": "2.20.0",
+    "keras": "3.15.1"
+  },
+  "training": {
+    "smoke": false,
+    "seed": 42,
+    "epochs_run": 40,
+    "best_epoch": 32,
+    "duration_seconds": 4487.0,
+    "class_weights": {
+      "glioma": 1.0446247464503042,
+      "meningioma": 0.9635173058933583,
+      "pituitary": 0.8428805237315876,
+      "no_tumor": 1.2218268090154212
+    },
+    "train_images": 4120,
+    "validation_images": 868,
+    "train_class_counts": {
+      "glioma": 986,
+      "meningioma": 1069,
+      "pituitary": 1222,
+      "no_tumor": 843
+    },
+    "hyperparameters": {
+      "architecture": "cnn",
+      "batch_size": 32,
+      "max_epochs": 40,
+      "learning_rate": 0.001,
+      "early_stopping_patience": 8,
+      "reduce_lr_patience": 3,
+      "monitor": "val_macro_f1",
+      "class_weighting": "balanced",
+      "smoke": {
+        "max_epochs": 2,
+        "samples_per_class": 24
+      }
+    },
+    "augmentation": {
+      "horizontal_flip": true,
+      "rotation_degrees": 10,
+      "zoom": 0.1,
+      "translation": 0.05,
+      "contrast": 0.1,
+      "brightness": 0.1
+    }
+  },
+  "dataset": {
+    "dataset_version": "brisc2025-clean-v1+uploads-4aecbec620",
+    "base_dataset_version": "brisc2025-clean-v1",
+    "train_fingerprint": "4aecbec6209002e602664df4b55ef73a1f09ab93e4b1eecbccd5bac2cb2204b0",
+    "validation_fingerprint": "a60f234e5d8bd86ace6d25b752043de4c8680b9d121ff8a9ba3eaaed14047733",
+    "base_train_images": 4020,
+    "uploaded_images": 100,
+    "upload_ids": [
+      "upload-08318cf942114f13",
+      "upload-6c72eb27385f4447",
+      "upload-7807a205b9974480",
+      "upload-a25199f44db142f7",
+      "upload-0e702ab439b941da",
+      "upload-c1837ede59834ace",
+      "upload-b418452cc2f64b64",
+      "upload-a6f3b5040ecb4e75",
+      "upload-ac91ad746c0749e7",
+      "upload-f01c36b62bbd4aab",
+      "upload-ad91e896f6c54570",
+      "upload-cc28035fd53a4855",
+      "upload-22f4aa9753854bc7",
+      "upload-1c7d47e1a59e4a91",
+      "upload-06847e5ddee94f95",
+      "upload-9408c9a1fe3d4a73",
+      "upload-616a14aa13be4a64",
+      "upload-32e2ff1db1d14cc3",
+      "upload-31c1417d3a0245fe",
+      "upload-9bb10de2936a4063",
+      "upload-14965fdbabc44cb1",
+      "upload-7c7c38e1b34a4e8a",
+      "upload-e9eda1fa6c9946b6",
+      "upload-d05cf0c8b4154875",
+      "upload-c3549237e69d4a41",
+      "upload-1ee9b16777af4a8d",
+      "upload-8748eb822b114e6d",
+      "upload-dd648a0c43f84359",
+      "upload-e425ae3c80454dcb",
+      "upload-18d5679b67074594",
+      "upload-1cea674382174502",
+      "upload-7074867203b544e1",
+      "upload-c1fee66560034011",
+      "upload-0981dad704924c6b",
+      "upload-6710a8f380ed4b90",
+      "upload-39aa7279e2344ab2",
+      "upload-77c168a2526b45c7",
+      "upload-de2269e3f9564951",
+      "upload-6f3aa07c79ad40f9",
+      "upload-63cb49cfefa64198",
+      "upload-0a00c486a58741c4",
+      "upload-252c27b860a34891",
+      "upload-9e507e018ac14a28",
+      "upload-e9f96541803844a3",
+      "upload-bee56d626e6b4339",
+      "upload-12f24dd9fe4b468c",
+      "upload-3918adee449c42b2",
+      "upload-c88f031afbfe482f",
+      "upload-6f6e6525cbb6401e",
+      "upload-98ea6fc50011486d",
+      "upload-b5df5486d35b4f9d",
+      "upload-2599d0b89d284076",
+      "upload-68b10a7b80474608",
+      "upload-9d58555c9f9d4bbf",
+      "upload-bd63762267e84b25",
+      "upload-5e6400e3d855492d",
+      "upload-28ad5259e67b481c",
+      "upload-f4c9fa812fe5456a",
+      "upload-e369ed96403f4b7d",
+      "upload-039333cf27c1449b",
+      "upload-6cc33f1fb7f74fdd",
+      "upload-456bb617c9464d36",
+      "upload-8d89a8e9f44c4db7",
+      "upload-08748f72818a403d",
+      "upload-b873703af697435a",
+      "upload-5ccc5472fa0c490f",
+      "upload-1bd192ef75cb49c5",
+      "upload-088fd4876d5c4d0f",
+      "upload-d4736b7393b141cf",
+      "upload-5cf22ca9b25d4cfe",
+      "upload-f7e6fc4e62854baa",
+      "upload-e59482d62602411b",
+      "upload-17000235702b4bc7",
+      "upload-944c8360b1604438",
+      "upload-f6f913a827b34c36",
+      "upload-3adf08ee12f044bd",
+      "upload-2155ab3315814c38",
+      "upload-2d644908df36489b",
+      "upload-57f317949f7c4320",
+      "upload-f8975f509d404bf9",
+      "upload-7a8b60122fb14c37",
+      "upload-0ff899a49fe4419c",
+      "upload-0f3d5ac2242f455c",
+      "upload-747afcc403ac4474",
+      "upload-6abbd1c9ea294a8d",
+      "upload-0b222e58b9354e44",
+      "upload-9426da0b1e5c420f",
+      "upload-1d2a2b3057e9435a",
+      "upload-b0feeaadae8140e2",
+      "upload-b64ea92e386142c4",
+      "upload-55c2406114e44f70",
+      "upload-cd8f25303ce44adf",
+      "upload-91d76a67b40847a7",
+      "upload-6a04081d57824e55",
+      "upload-633150194ea34fda",
+      "upload-fbc322f4289048c9",
+      "upload-40fa413d3c344991",
+      "upload-f66859e369394cde",
+      "upload-2bc23050716b4017",
+      "upload-d8d491ef34ae4122"
+    ]
+  },
+  "validation_metrics": {
+    "samples": 868,
+    "accuracy": 0.9527649769585254,
+    "balanced_accuracy": 0.9528319782041227,
+    "macro_f1": 0.954794956318675,
+    "weighted_f1": 0.952803662949346,
+    "per_class": {
+      "glioma": {
+        "precision": 1.0,
+        "recall": 0.9130434782608695,
+        "f1": 0.9545454545454546,
+        "support": 207
+      },
+      "meningioma": {
+        "precision": 0.9330357142857143,
+        "recall": 0.9288888888888889,
+        "f1": 0.9309576837416481,
+        "support": 225
+      },
+      "pituitary": {
+        "precision": 0.9169675090252708,
+        "recall": 0.9806949806949807,
+        "f1": 0.9477611940298507,
+        "support": 259
+      },
+      "no_tumor": {
+        "precision": 0.9831460674157303,
+        "recall": 0.9887005649717514,
+        "f1": 0.9859154929577465,
+        "support": 177
+      }
+    },
+    "confusion_matrix": [
+      [
+        189,
+        10,
+        7,
+        1
+      ],
+      [
+        0,
+        209,
+        14,
+        2
+      ],
+      [
+        0,
+        5,
+        254,
+        0
+      ],
+      [
+        0,
+        0,
+        2,
+        175
+      ]
+    ],
+    "class_order": [
+      "glioma",
+      "meningioma",
+      "pituitary",
+      "no_tumor"
+    ],
+    "log_loss": 0.13837459683418274,
+    "expected_calibration_error": 0.014927285573174829,
+    "tumor_detection": {
+      "sensitivity": 0.9956584659913169,
+      "specificity": 0.9887005649717514,
+      "accuracy": 0.9942396313364056,
+      "false_negatives": 3,
+      "false_positives": 2
+    },
+    "macro_roc_auc_ovr": 0.9972942801535494
+  },
+  "job_id": "a78ad55b9d65",
+  "parent_version": "v002",
+  "trigger": "manual retrain request",
+  "version": "v003",
+  "registered_at": "2026-11-21T12:32:50+00:00",
+  "artifacts": {
+    "model.keras": {
+      "file": "model.keras",
+      "sha256": "6eb2ce973960297765ba2c914f23e9e5a0c25ac254a68d4506e62053a0bfae8b"
+    },
+    "model.h5": {
+      "file": "model.h5",
+      "sha256": "64b870fff66f5223c1e9c8d5ba0d7efc5a88467ff4b65de020b63799e3870b1d"
+    }
+  },
+  "reload_check": {
+    "model.keras": {
+      "max_abs_difference": 0.0,
+      "probe_images": 16
+    },
+    "model.h5": {
+      "max_abs_difference": 0.0,
+      "probe_images": 16
+    }
+  }
+}

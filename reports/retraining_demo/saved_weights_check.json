@@ -1,0 +1,238 @@
+{
+  "scope": "isolated local worker; one epoch, full training and validation splits",
+  "sample_id": "brisc2025_test_00141_gl_co_t1",
+  "upload_status": "staged",
+  "queued_status": "queued",
+  "job": {
+    "id": "29ee600f3b4d",
+    "kind": "retrain",
+    "status": "succeeded",
+    "created_at": "2026-11-22T10:13:06+00:00",
+    "started_at": "2026-11-22T10:13:17+00:00",
+    "finished_at": "2026-11-22T10:14:36+00:00",
+    "params": {
+      "smoke": false,
+      "admitted_uploads_at_request": 1
+    },
+    "result": {
+      "candidate_version": "v003",
+      "previous_active_version": "v002",
+      "promoted": false,
+      "initialization": "saved_custom_weights",
+      "parent_version": "v002",
+      "promotion_blocked": null,
+      "active_version": "v002",
+      "decision": {
+        "promote": false,
+        "candidate_score": 0.8766106346614002,
+        "active_score": 0.9301967017028034,
+        "reasons": [
+          "macro_f1: candidate 0.8766 vs active 0.9302 (allowed drop 0.01) -> too low",
+          "recall for glioma fell by 0.1884 (> 0.05)",
+          "recall for meningioma fell by 0.2133 (> 0.05)"
+        ]
+      },
+      "uploads_included": 1,
+      "train_images": 4021,
+      "dataset_version": "brisc2025-clean-v1+uploads-3739465b2f",
+      "candidate_validation": {
+        "accuracy": 0.8778801843317973,
+        "macro_f1": 0.8766106346614002,
+        "balanced_accuracy": 0.8766332096914264
+      },
+      "active_validation": {
+        "accuracy": 0.923963133640553,
+        "macro_f1": 0.9301967017028034,
+        "balanced_accuracy": 0.9325955537598869
+      },
+      "epochs_run": 1,
+      "training_seconds": 67.6
+    },
+    "error": null,
+    "log_path": "D:\\ALU_Trials\\Mlops_structure\\data\\cache\\saved_weights_check_e2bce89d\\state\\jobs\\29ee600f3b4d.log"
+  },
+  "parent_unchanged": true,
+  "candidate_metadata": {
+    "architecture": "cnn",
+    "class_names": [
+      "glioma",
+      "meningioma",
+      "pituitary",
+      "no_tumor"
+    ],
+    "preprocessing": {
+      "image_size": 128,
+      "resample": "bilinear",
+      "channels": 1,
+      "padding": "letterbox-black",
+      "normalization": "divide-by-255"
+    },
+    "parameters": 295188,
+    "framework": {
+      "tensorflow": "2.20.0",
+      "keras": "3.15.1"
+    },
+    "training": {
+      "initialization": "saved_custom_weights",
+      "optimizer_state": "fresh",
+      "smoke": false,
+      "seed": 42,
+      "epochs_run": 1,
+      "best_epoch": 1,
+      "duration_seconds": 67.6,
+      "class_weights": {
+        "glioma": 1.0449584199584199,
+        "meningioma": 0.9628831417624522,
+        "pituitary": 0.8398078529657477,
+        "no_tumor": 1.2289119804400979
+      },
+      "train_images": 4021,
+      "validation_images": 868,
+      "fit_validation_images": 868,
+      "train_class_counts": {
+        "glioma": 962,
+        "meningioma": 1044,
+        "pituitary": 1197,
+        "no_tumor": 818
+      },
+      "hyperparameters": {
+        "architecture": "cnn",
+        "batch_size": 32,
+        "class_weighting": "balanced",
+        "early_stopping_patience": 8,
+        "learning_rate": 0.0001,
+        "max_epochs": 1,
+        "monitor": "val_macro_f1",
+        "reduce_lr_patience": 3,
+        "smoke": {
+          "max_epochs": 2,
+          "samples_per_class": 24
+        }
+      },
+      "augmentation": {
+        "brightness": 0.1,
+        "contrast": 0.1,
+        "horizontal_flip": true,
+        "rotation_degrees": 10,
+        "translation": 0.05,
+        "zoom": 0.1
+      }
+    },
+    "dataset": {
+      "dataset_version": "brisc2025-clean-v1+uploads-3739465b2f",
+      "base_dataset_version": "brisc2025-clean-v1",
+      "train_fingerprint": "3739465b2fd93c9b703b96cf3f13663ca5a49b1965a752cb7fed1280650c0675",
+      "validation_fingerprint": "a60f234e5d8bd86ace6d25b752043de4c8680b9d121ff8a9ba3eaaed14047733",
+      "base_train_images": 4020,
+      "uploaded_images": 1,
+      "upload_ids": [
+        "upload-ce55c703133440e6"
+      ]
+    },
+    "validation_metrics": {
+      "samples": 868,
+      "accuracy": 0.8778801843317973,
+      "balanced_accuracy": 0.8766332096914264,
+      "macro_f1": 0.8766106346614002,
+      "weighted_f1": 0.8754259790992571,
+      "per_class": {
+        "glioma": {
+          "precision": 1.0,
+          "recall": 0.7584541062801933,
+          "f1": 0.8626373626373627,
+          "support": 207
+        },
+        "meningioma": {
+          "precision": 0.9105263157894737,
+          "recall": 0.7688888888888888,
+          "f1": 0.8337349397590361,
+          "support": 225
+        },
+        "pituitary": {
+          "precision": 0.8113207547169812,
+          "recall": 0.9961389961389961,
+          "f1": 0.8942807625649913,
+          "support": 259
+        },
+        "no_tumor": {
+          "precision": 0.8571428571428571,
+          "recall": 0.9830508474576272,
+          "f1": 0.9157894736842105,
+          "support": 177
+        }
+      },
+      "confusion_matrix": [
+        [
+          157,
+          17,
+          21,
+          12
+        ],
+        [
+          0,
+          173,
+          36,
+          16
+        ],
+        [
+          0,
+          0,
+          258,
+          1
+        ],
+        [
+          0,
+          0,
+          3,
+          174
+        ]
+      ],
+      "class_order": [
+        "glioma",
+        "meningioma",
+        "pituitary",
+        "no_tumor"
+      ],
+      "log_loss": 0.3407133221626282,
+      "expected_calibration_error": 0.03491846866871357,
+      "tumor_detection": {
+        "sensitivity": 0.9580318379160637,
+        "specificity": 0.9830508474576272,
+        "accuracy": 0.9631336405529954,
+        "false_negatives": 29,
+        "false_positives": 3
+      },
+      "macro_roc_auc_ovr": 0.9919832835948081
+    },
+    "job_id": "29ee600f3b4d",
+    "parent_version": "v002",
+    "trigger": "manual retrain request",
+    "parent_artifact": {
+      "file": "model.keras",
+      "sha256": "851d0e06e0e26f1e7ec9513dc122f008e9f4fa8467ffe3e67676c0d1e795eed1"
+    },
+    "version": "v003",
+    "registered_at": "2026-11-22T10:14:36+00:00",
+    "artifacts": {
+      "model.keras": {
+        "file": "model.keras",
+        "sha256": "911cbe607426772c209b0edc320e7f393632c7395b94ea561ce8eede65073f7e"
+      },
+      "model.h5": {
+        "file": "model.h5",
+        "sha256": "16169228793167d84f591cd436ff67d43e2b72564d4723fd82eef54806508584"
+      }
+    },
+    "reload_check": {
+      "model.keras": {
+        "max_abs_difference": 0.0,
+        "probe_images": 16
+      },
+      "model.h5": {
+        "max_abs_difference": 0.0,
+        "probe_images": 16
+      }
+    }
+  },
+  "isolated_artifacts": "data\\cache\\saved_weights_check_e2bce89d\\models"
+}
