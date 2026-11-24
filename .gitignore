@@ -16,7 +16,7 @@ data/*
 !data/train/
 !data/test/
 
-# Model registry: delivered versions v001-v003 and the top-level copy of the served model
+# Model registry: delivered versions v001-v004 and the top-level copy of the served model
 # are included (see models/README.md); later candidates stay local.
 models/*
 !models/README.md
@@ -27,6 +27,10 @@ models/versions/*
 !models/versions/v001/
 !models/versions/v002/
 !models/versions/v003/
+!models/versions/v004/
+
+# Locally generated deployment bundle; rebuild it after code changes.
+deploy-package*.tar.gz
 
 # Load-test scratch output (curated raw results live in loadtest/results/)
 loadtest/tmp/

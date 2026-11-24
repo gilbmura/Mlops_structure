@@ -8,6 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from ui.api_client import ApiClient, ApiError
+from ui.presentation import page_header
 
 
 def _duration(seconds: float) -> str:
@@ -79,7 +80,7 @@ def _render_jobs(client: ApiClient) -> None:
 
 
 def render(client: ApiClient) -> None:
-    st.title("System status")
+    page_header("System status", "03 · Monitor", "Inspect service availability, model versions and training history.")
     if st.button("Refresh"):
         st.rerun()
     _render_health(client)

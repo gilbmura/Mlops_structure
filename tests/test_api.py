@@ -34,6 +34,7 @@ def real_client(real_settings, settings):
 def client(settings, config, indexed_images):
     """App without a model (fast), used for validation, auth and upload/retrain flow tests."""
     with TestClient(create_app(settings, config)) as test_client:
+        test_client.app.state.services.ingestion.content_check = lambda data: []
         yield test_client
 
 
@@ -99,6 +100,25 @@ def test_health_without_model_is_degraded(client) -> None:
     assert response.status_code == 503 and response.json()["status"] == "degraded"
 
 
+def test_direct_api_admission_cannot_bypass_content_checks(client):
+    response = client.post("/uploads/images", headers=ADMIN,
+                           files=[("files", ("scan.png", make_image(310)))], data={"labels": '["glioma"]'})
+    assert response.status_code == 200, response.text
+    upload_id = response.json()["items"][0]["id"]
+    client.app.state.services.ingestion.content_check = lambda data: ["Not MRI-like"]
+    result = client.post("/uploads/admit", headers=ADMIN,
+                         json={"upload_ids": [upload_id], "confirm_labels_reviewed": True})
+    assert result.status_code == 200 and result.json()["admitted"] == []
+    assert client.patch(f"/uploads/{upload_id}", headers=ADMIN, json={"label": "no_tumor"}).status_code == 409
+
+
+def test_upload_returns_503_when_screening_is_unavailable(client):
+    client.app.state.services.ingestion.content_check = None
+    response = client.post("/uploads/images", headers=ADMIN,
+                           files=[("files", ("scan.png", make_image(311)))], data={"labels": '["glioma"]'})
+    assert response.status_code == 503
+
+
 def test_predict_without_model_returns_503(client) -> None:
     assert client.post("/predict", files={"file": ("x.jpg", make_image(1))}).status_code == 503
 
@@ -155,3 +175,46 @@ def test_unsafe_zip_is_rejected(client) -> None:
         archive.writestr("../../outside.png", make_image(10))
     response = client.post("/uploads/zip", files={"file": ("bad.zip", buffer.getvalue())}, headers=ADMIN)
     assert response.status_code == 400 and "traversal" in response.json()["detail"]
+
+
+def test_rejected_batch_cannot_use_previously_admitted_pool(client):
+    store = client.app.state.services.uploads
+    store.add({"id": "old", "batch_id": "old-batch", "original_name": "old.png", "label": "glioma", "status": "admitted"})
+    store.add({"id": "bad", "batch_id": "rejected-batch", "original_name": "drawing.png", "status": "rejected"})
+    for batch in ("rejected-batch", "unknown-batch"):
+        response = client.post("/jobs/retrain", headers=ADMIN, json={"batch_id": batch})
+        assert response.status_code == 400
+    assert client.get("/jobs").json() == []
+    response = client.post("/jobs/retrain", headers=ADMIN, json={})
+    assert response.status_code == 202
+    assert response.json()["params"]["upload_ids"] == ["old"]
+
+
+def test_batch_job_snapshots_only_its_admitted_images(client):
+    store = client.app.state.services.uploads
+    for uid, batch, state in [("old", "previous", "admitted"), ("good", "current", "admitted"),
+                               ("pending", "current", "staged"), ("bad", "current", "rejected")]:
+        store.add({"id": uid, "batch_id": batch, "original_name": f"{uid}.png", "label": "glioma", "status": state})
+    response = client.post("/jobs/retrain", headers=ADMIN, json={"batch_id": "current"})
+    assert response.status_code == 202
+    assert response.json()["params"]["upload_ids"] == ["good"]
+
+
+def test_initial_training_requires_admin_data_and_valid_architecture(client):
+    assert client.post("/jobs/train", json={}).status_code == 401
+    assert client.post("/jobs/train", headers=ADMIN, json={}).status_code == 400
+    folder = client.app.state.services.settings.manifests_dir
+    folder.mkdir(parents=True, exist_ok=True)
+    for split in ("train", "validation"):
+        (folder / f"{split}.csv").write_text("sample_id,label,path\n")
+    assert client.post("/jobs/train", headers=ADMIN, json={"architecture": "pretrained"}).status_code == 422
+    response = client.post("/jobs/train", headers=ADMIN, json={"architecture": "baseline", "smoke": True})
+    assert response.status_code == 202
+    assert response.json()["kind"] == "train"
+    assert response.json()["params"] == {"architecture": "baseline", "smoke": True}
+    assert client.post("/jobs/train", headers=ADMIN, json={}).status_code == 409
+
+
+def test_smoke_candidate_cannot_be_activated(client, monkeypatch):
+    monkeypatch.setattr(client.app.state.services.registry, "metadata", lambda version: {"training": {"smoke": True}})
+    assert client.post("/models/v001/activate", headers=ADMIN, json={"reason": "test smoke"}).status_code == 409

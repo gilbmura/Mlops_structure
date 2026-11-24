@@ -15,6 +15,8 @@ router = APIRouter(prefix="/models", tags=["models"], dependencies=[AdminDep])
 def activate(services: ServicesDep, version: str, body: ActivationRequest) -> dict:
     """Serve a specific registered version (manual override of the automatic promotion rule)."""
     try:
+        if services.registry.metadata(version).get("training", {}).get("smoke"):
+            raise HTTPException(status.HTTP_409_CONFLICT, "Smoke candidates cannot be activated. Run full training first.")
         services.registry.activate(version, f"manual activation: {body.reason}")
     except RegistryError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc

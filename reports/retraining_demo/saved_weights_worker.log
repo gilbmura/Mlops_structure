@@ -1,14 +1,15 @@
-2026-11-22 12:13:17,283 INFO worker: Worker ready; polling every 3s
-2026-11-22 12:13:17,295 INFO worker: Job 29ee600f3b4d (retrain) started with params {'smoke': False, 'admitted_uploads_at_request': 1}
-2026-11-22 12:13:17,300 INFO src.retraining: Job 29ee600f3b4d: continuing custom model v002 with 1 admitted uploads
-2026-11-22 12:13:17,998 INFO src.dataset.manifests: Preprocessing 1 images (cache miss)
-2026-11-22 12:13:23,334 INFO src.training: Training cnn (saved custom weights): 4021 train / 868 validation images, up to 1 epochs
-2026-11-22 12:14:30,848 INFO src.training: epoch 1: accuracy=0.9577 learning_rate=0.0001 loss=0.1254 macro_f1=0.9589 val_accuracy=0.8779 val_loss=0.3407 val_macro_f1=0.8766
-2026-11-22 12:14:34,740 INFO src.pipeline: Validation macro-F1 0.8766, accuracy 0.8779
-2026-11-22 12:14:34,977 WARNING absl: You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
-2026-11-22 12:14:36,923 INFO src.registry: Registered model v003
-2026-11-22 12:14:36,924 INFO src.retraining: Promotion check: macro_f1: candidate 0.8766 vs active 0.9302 (allowed drop 0.01) -> too low
-2026-11-22 12:14:36,925 INFO src.retraining: Promotion check: recall for glioma fell by 0.1884 (> 0.05)
-2026-11-22 12:14:36,925 INFO src.retraining: Promotion check: recall for meningioma fell by 0.2133 (> 0.05)
-2026-11-22 12:14:36,938 INFO src.retraining: Candidate v003 not promoted; v002 remains active
-2026-11-22 12:14:36,966 INFO worker: Job 29ee600f3b4d succeeded: {'candidate_version': 'v003', 'previous_active_version': 'v002', 'promoted': False, 'initialization': 'saved_custom_weights', 'parent_version': 'v002', 'promotion_blocked': None, 'active_version': 'v002', 'decision': {'promote': False, 'candidate_score': 0.8766106346614002, 'active_score': 0.9301967017028034, 'reasons': ['macro_f1: candidate 0.8766 vs active 0.9302 (allowed drop 0.01) -> too low', 'recall for glioma fell by 0.1884 (> 0.05)', 'recall for meningioma fell by 0.2133 (> 0.05)']}, 'uploads_included': 1, 'train_images': 4021, 'dataset_version': 'brisc2025-clean-v1+uploads-3739465b2f', 'candidate_validation': {'accuracy': 0.8778801843317973, 'macro_f1': 0.8766106346614002, 'balanced_accuracy': 0.8766332096914264}, 'active_validation': {'accuracy': 0.923963133640553, 'macro_f1': 0.9301967017028034, 'balanced_accuracy': 0.9325955537598869}, 'epochs_run': 1, 'training_seconds': 67.6}
+2026-11-24 11:05:48,721 INFO worker: Worker ready; polling every 3s
+2026-11-24 11:05:48,739 INFO worker: Job 638d67937f81 (retrain) started with params {'smoke': False, 'batch_id': 'a7453d50860e', 'upload_ids': ['4f962f4911a3433b'], 'admitted_uploads_at_request': 1}
+2026-11-24 11:05:48,742 INFO src.retraining: Job 638d67937f81: continuing custom model v002 with 1 admitted uploads
+2026-11-24 11:05:49,790 INFO src.dataset.manifests: Preprocessing 1 images (cache miss)
+2026-11-24 11:05:54,726 INFO src.training: Training cnn (saved custom weights): 4021 train / 868 validation images, up to 1 epochs
+2026-11-24 11:06:59,479 INFO src.training: epoch 1: accuracy=0.9570 learning_rate=0.0001 loss=0.1261 macro_f1=0.9581 val_accuracy=0.8848 val_loss=0.3109 val_macro_f1=0.8885
+2026-11-24 11:07:05,004 INFO src.pipeline: Validation macro-F1 0.8885, accuracy 0.8848
+2026-11-24 11:07:22,834 INFO src.pipeline: Input gate threshold 17.02 refuses 1.0% of validation MRIs
+2026-11-24 11:07:22,964 WARNING absl: You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`.
+2026-11-24 11:07:24,306 INFO src.registry: Registered model v003
+2026-11-24 11:07:24,306 INFO src.retraining: Promotion check: macro_f1: candidate 0.8885 vs active 0.9302 (allowed drop 0.01) -> too low
+2026-11-24 11:07:24,307 INFO src.retraining: Promotion check: recall for glioma fell by 0.1401 (> 0.05)
+2026-11-24 11:07:24,307 INFO src.retraining: Promotion check: recall for meningioma fell by 0.2356 (> 0.05)
+2026-11-24 11:07:24,323 INFO src.retraining: Candidate v003 not promoted; v002 remains active
+2026-11-24 11:07:24,355 INFO worker: Job 638d67937f81 succeeded: {'candidate_version': 'v003', 'previous_active_version': 'v002', 'promoted': False, 'initialization': 'saved_custom_weights', 'parent_version': 'v002', 'promotion_blocked': None, 'active_version': 'v002', 'decision': {'promote': False, 'candidate_score': 0.8885227279284584, 'active_score': 0.9301967017028034, 'reasons': ['macro_f1: candidate 0.8885 vs active 0.9302 (allowed drop 0.01) -> too low', 'recall for glioma fell by 0.1401 (> 0.05)', 'recall for meningioma fell by 0.2356 (> 0.05)']}, 'uploads_included': 1, 'train_images': 4021, 'dataset_version': 'brisc2025-clean-v1+uploads-9659f70df9', 'candidate_validation': {'accuracy': 0.8847926267281107, 'macro_f1': 0.8885227279284584, 'balanced_accuracy': 0.8841201997871121}, 'active_validation': {'accuracy': 0.923963133640553, 'macro_f1': 0.9301967017028034, 'balanced_accuracy': 0.9325955537598869}, 'epochs_run': 1, 'training_seconds': 64.8}

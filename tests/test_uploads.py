@@ -12,6 +12,7 @@ from PIL import Image
 from src.ingestion.archive import UnsafeArchiveError, read_zip
 from src.ingestion.limits import UploadLimits
 from src.ingestion.service import IncomingFile, IngestionService, UploadRejectedError
+from src.ingestion.service import ContentScreeningUnavailable
 from src.labels import UnknownLabelError
 from src.storage.database import Database
 from src.storage.uploads import UploadStateError, UploadStore
@@ -25,7 +26,7 @@ def store(settings) -> UploadStore:
 
 @pytest.fixture
 def service(settings, config, store, dataset_index) -> IngestionService:
-    return IngestionService(store, settings.staging_dir, dataset_index, UploadLimits.from_config(config), 64, 8.0)
+    return IngestionService(store, settings.staging_dir, dataset_index, UploadLimits.from_config(config), 64, 8.0, content_check=lambda data: [])
 
 
 def _zip(entries: dict[str, bytes], symlink: str | None = None) -> bytes:
@@ -160,3 +161,52 @@ def test_review_flow_label_correction_and_admission(service, store) -> None:
     with pytest.raises(UploadStateError):
         store.set_label(needs["id"], "glioma")  # admitted labels are frozen
     assert {u["label"] for u in store.admitted()} == {"glioma", "meningioma"}
+
+
+@pytest.mark.parametrize("as_zip", [False, True])
+def test_content_rejection_cannot_be_overridden_by_label(service, store, as_zip):
+    service.content_check = lambda data: ["Not MRI-like"]
+    report = (service.ingest_zip(_zip({"glioma/a.png": make_image(201)})) if as_zip
+              else service.ingest_files([IncomingFile("a.png", make_image(201), "glioma")]))
+    item = report["items"][0]
+    assert item["status"] == "rejected" and "Not MRI-like" in item["reason"]
+    assert not item.get("stored_path")
+    with pytest.raises(UploadStateError):
+        store.set_label(item["id"], "no_tumor")
+    assert service.admit([item["id"]]) == []
+
+
+def test_admission_rechecks_legacy_staged_content(service, store):
+    item = service.ingest_files([IncomingFile("a.png", make_image(202), "glioma")])["items"][0]
+    service.content_check = lambda data: ["Not MRI-like"]
+    assert service.admit([item["id"]]) == []
+    assert store.get(item["id"])["status"] == "rejected"
+
+
+def test_admission_rejects_modified_stored_image(service, store):
+    from pathlib import Path
+    item = service.ingest_files([IncomingFile("a.png", make_image(203), "glioma")])["items"][0]
+    Path(item["stored_path"]).write_bytes(make_image(204))
+    assert service.admit([item["id"]]) == []
+    assert "changed since upload" in store.get(item["id"])["reason"]
+
+
+def test_screening_unavailable_blocks_staging_and_admission(service, store):
+    item = service.ingest_files([IncomingFile("a.png", make_image(205), "glioma")])["items"][0]
+    service.content_check = None
+    with pytest.raises(ContentScreeningUnavailable):
+        service.ingest_files([IncomingFile("b.png", make_image(206), "glioma")])
+    with pytest.raises(ContentScreeningUnavailable):
+        service.admit([item["id"]])
+    assert not store.admitted()
+
+
+def test_oversized_batch_is_rejected_before_decompression(service, monkeypatch):
+    data = _zip({f"glioma/{i}.jpg": b"image" for i in range(service.limits.max_files_per_batch + 1)})
+
+    def unexpected_read(*args, **kwargs):
+        pytest.fail("Oversized archive was decompressed before checking its file count")
+
+    monkeypatch.setattr(zipfile.ZipFile, "open", unexpected_read)
+    with pytest.raises(UnsafeArchiveError, match="batch limit"):
+        service.ingest_zip(data)

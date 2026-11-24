@@ -44,6 +44,14 @@
       "validation_macro_f1": 0.954794956318675,
       "job_id": "a78ad55b9d65",
       "status": "previous"
+    },
+    "v004": {
+      "registered_at": "2026-11-23T18:41:09+00:00",
+      "architecture": "cnn",
+      "dataset_version": "brisc2025-clean-v1+uploads-4aecbec620",
+      "validation_macro_f1": 0.9345670579244071,
+      "job_id": "5debb96a85bf",
+      "status": "rejected"
     }
   }
 }

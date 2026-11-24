@@ -14,6 +14,7 @@ from src.dataset.manifests import ManifestError, load_similarity_index
 from src.ingestion.limits import UploadLimits
 from src.ingestion.screening import DatasetIndex
 from src.ingestion.service import IngestionService
+from src.ingestion.content import screen_content
 from src.prediction import ActiveModelProvider
 from src.registry import ModelRegistry
 from src.storage.database import Database
@@ -50,12 +51,14 @@ def build_services(settings: Settings, config: dict) -> Services:
     registry = ModelRegistry(settings.models_dir)
     limits = UploadLimits.from_config(config)
     uploads = UploadStore(database)
+    models = ActiveModelProvider(registry, config, limits.image)
     ingestion, ingestion_error = None, None
     try:
         index = DatasetIndex(load_similarity_index(settings.cache_dir / "similarity_index.npz"), DuplicateRules.from_config(config))
         ingestion = IngestionService(
             uploads, settings.staging_dir, index, limits,
             int(config["duplicates"]["thumbnail_size"]), float(config["input_gate"]["max_channel_spread"]),
+            content_check=lambda data: screen_content(models.get, data),
         )
     except ManifestError as exc:  # uploads need the dataset index to screen for leakage
         ingestion_error = str(exc)
@@ -64,7 +67,7 @@ def build_services(settings: Settings, config: dict) -> Services:
         settings=settings,
         config=config,
         registry=registry,
-        models=ActiveModelProvider(registry, config, limits.image),
+        models=models,
         jobs=JobStore(database, settings.job_logs_dir),
         uploads=uploads,
         probes=ProbeStore(database),

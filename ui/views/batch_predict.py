@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from ui.api_client import ApiClient, ApiError
+from ui.presentation import activity, card
 from utils.csv_export import csv_bytes
 
 
@@ -28,7 +29,7 @@ def result_rows(report: dict) -> list[dict]:
 def render(client: ApiClient) -> None:
     st.caption("Upload a ZIP of JPEG/PNG images, at its root or in folders. Class labels and an admin key are not required. "
                "These files are used only for prediction; they do not enter the retraining pool.")
-    st.caption("Default limits: 200 files, 100 MiB ZIP, 300 MiB expanded, 10 MiB per image. Nested archives are rejected.")
+    st.caption("Default limits: 200 files, 320 MiB ZIP, 640 MiB expanded, 10 MiB per image. Nested archives are rejected.")
     archive = st.file_uploader("ZIP for batch predictions", type=["zip"], key="prediction_zip")
     if archive is None:
         st.session_state.pop("zip_prediction_result", None)
@@ -43,7 +44,7 @@ def render(client: ApiClient) -> None:
         st.session_state.pop("zip_prediction_result", None)
         cached = None
         try:
-            with st.spinner("Validating the archive and classifying images…"):
+            with activity("Validating the archive and classifying images…", "Batch processing complete — review the results below"):
                 report = client.predict_zip(archive.name, data)
             cached = (fingerprint, report)
             st.session_state["zip_prediction_result"] = cached
@@ -52,7 +53,8 @@ def render(client: ApiClient) -> None:
     if not cached:
         return
     report = cached[1]
-    st.write(f"**{report['predicted_files']} predicted · {report['rejected_files']} rejected** · Model {report['model_version']}")
+    card(f"{report['predicted_files']} predicted · {report['rejected_files']} rejected",
+         "Review individual results and rejection reasons below, or download the CSV.", label=f"Model {report['model_version']} · batch results")
     if not report["predicted_files"]:
         st.warning("No valid images were classified. Check the rejection reasons below.")
     st.caption(report["disclaimer"])

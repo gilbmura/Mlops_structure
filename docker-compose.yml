@@ -45,7 +45,7 @@ services:
       - "8000:8000"
     depends_on:
       api:
-        condition: service_healthy
+        condition: service_started  # UI/API must be reachable for initial training without a model
     restart: unless-stopped
 
   worker:
@@ -67,7 +67,7 @@ services:
           memory: 4G
     depends_on:
       api:
-        condition: service_healthy
+        condition: service_started  # worker can bootstrap the first model while readiness is 503
     restart: unless-stopped
 
   probe:
@@ -96,6 +96,7 @@ services:
     image: brain-mri-ui:local
     environment:
       API_URL: http://gateway:8000
+      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: "320"
     ports:
       - "8501:8501"
     deploy:

@@ -18,9 +18,10 @@ from collections.abc import Callable
 
 from config.settings import Settings, get_settings, load_pipeline_config
 from src.registry import ModelRegistry
+from src.initial_training import run_initial_training
 from src.retraining import run_retraining
 from src.storage.database import Database
-from src.storage.jobs import FAILED, RETRAIN, SUCCEEDED, JobStore
+from src.storage.jobs import FAILED, TRAIN, RETRAIN, SUCCEEDED, JobStore
 from src.storage.uploads import UploadStore
 from utils.log import add_file_handler, configure_logging
 
@@ -32,7 +33,10 @@ POLL_SECONDS = 3.0
 def _handlers(settings: Settings, config: dict, database: Database) -> dict[str, Callable[[dict], dict]]:
     registry = ModelRegistry(settings.models_dir)
     uploads = UploadStore(database)
-    return {RETRAIN: lambda job: run_retraining(job["id"], job["params"], settings, config, registry, uploads)}
+    return {
+        TRAIN: lambda job: run_initial_training(job["id"], job["params"], settings, config, registry),
+        RETRAIN: lambda job: run_retraining(job["id"], job["params"], settings, config, registry, uploads),
+    }
 
 
 def process_one(jobs: JobStore, handlers: dict[str, Callable[[dict], dict]]) -> bool:

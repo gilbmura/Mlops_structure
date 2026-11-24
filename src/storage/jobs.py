@@ -10,11 +10,11 @@ from pathlib import Path
 from src.storage.database import Database, utc_now
 
 QUEUED, RUNNING, SUCCEEDED, FAILED = "queued", "running", "succeeded", "failed"
-RETRAIN = "retrain"  # the only job kind; the worker maps kinds to handlers
+TRAIN, RETRAIN = "train", "retrain"
 
 
 class JobConflictError(RuntimeError):
-    """Raised when a job of the same kind is already queued or running."""
+    """Raised when an incompatible job is already queued or running."""
 
 
 def _row(row: sqlite3.Row | None) -> dict | None:
@@ -32,7 +32,7 @@ class JobStore:
         self.logs_dir = Path(logs_dir)
 
     def create(self, kind: str, params: dict | None = None) -> dict:
-        """Queue a job; the database refuses a second active job of the same kind."""
+        """Queue a job; training and retraining share a single active slot."""
         job_id = uuid.uuid4().hex[:12]
         log_path = self.logs_dir / f"{job_id}.log"
         try:
@@ -42,9 +42,10 @@ class JobStore:
                     (job_id, kind, QUEUED, utc_now(), json.dumps(params or {}), str(log_path)),
                 )
         except sqlite3.IntegrityError as exc:
-            active = self.active(kind)
+            active = (self.active(TRAIN) or self.active(RETRAIN)) if kind in (TRAIN, RETRAIN) else self.active(kind)
             raise JobConflictError(
-                f"A {kind} job is already {active['status'] if active else 'active'} ({active['id'] if active else 'unknown'})."
+                f"A {active['kind'] if active else kind} job is already {active['status'] if active else 'active'} "
+                f"({active['id'] if active else 'unknown'})."
             ) from exc
         return self.get(job_id)
 

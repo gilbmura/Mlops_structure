@@ -60,7 +60,8 @@ def main() -> None:
         response = client.post("/uploads/admit", headers=headers,
             json={"upload_ids": [item["id"]], "confirm_labels_reviewed": True})
         response.raise_for_status()
-        response = client.post("/jobs/retrain", headers=headers, json={"smoke": False})
+        response = client.post("/jobs/retrain", headers=headers,
+                               json={"smoke": False, "batch_id": item["batch_id"]})
         response.raise_for_status()
         job = response.json()
         assert job["status"] == "queued"

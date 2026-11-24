@@ -86,8 +86,9 @@ class ApiClient:
     def upload_zip(self, name: str, data: bytes) -> dict:
         return self._json("POST", "/uploads/zip", admin=True, timeout=300, files={"file": (name, data, "application/zip")})
 
-    def uploads(self, status: str | None = None) -> dict:
-        return self._json("GET", "/uploads", admin=True, params={"status_filter": status} if status else None)
+    def uploads(self, status: str | None = None, batch_id: str | None = None) -> dict:
+        params = {key: value for key, value in {"status_filter": status, "batch_id": batch_id}.items() if value is not None}
+        return self._json("GET", "/uploads", admin=True, params=params)
 
     def upload_image(self, upload_id: str) -> bytes:
         return self._request("GET", f"/uploads/{upload_id}/image", admin=True).content
@@ -101,8 +102,11 @@ class ApiClient:
     def admit(self, upload_ids: list[str]) -> dict:
         return self._json("POST", "/uploads/admit", admin=True, json={"upload_ids": upload_ids, "confirm_labels_reviewed": True})
 
-    def retrain(self, smoke: bool) -> dict:
-        return self._json("POST", "/jobs/retrain", admin=True, json={"smoke": smoke})
+    def retrain(self, smoke: bool, batch_id: str | None = None) -> dict:
+        return self._json("POST", "/jobs/retrain", admin=True, json={"smoke": smoke, "batch_id": batch_id})
+
+    def train(self, architecture: str, smoke: bool) -> dict:
+        return self._json("POST", "/jobs/train", admin=True, json={"architecture": architecture, "smoke": smoke})
 
     def rollback(self, reason: str) -> dict:
         return self._json("POST", "/models/rollback", admin=True, json={"reason": reason})

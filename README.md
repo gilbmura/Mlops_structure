@@ -42,10 +42,13 @@ notebook §8 and [Limitations](#limitations).
 | Evaluation results and figures | `reports/models/v002/` (metrics, confusion matrices, training curves, predictions) |
 | API · UI · Docker | `api/`, `ui/`, `docker-compose.yml`, `deploy/docker/` |
 | Load-test results | `loadtest/results/` and `loadtest/README.md` |
-| Tests | `tests/` (96 passing) |
+| Tests | `tests/` (125 passed during QA on 2026-11-24; `reports/qa_tests.xml`) |
 
-**To be added later:** the Azure public URL, the YouTube demo-video link, the cloud load-test results
-and the GitHub repository URL (see [Status of deliverables](#status-of-deliverables)).
+**Repository:** https://github.com/gilbmura/Mlops_structure (configured Git remote; publish the latest local changes).
+**Azure URL:** https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com (original deployment;
+current public checks timed out on 2026-11-24, and local updates still need deployment).
+**Still needed:** the YouTube demo-video link and cloud evaluation/load-test evidence
+(see [Status of deliverables](#status-of-deliverables)).
 
 ---
 
@@ -240,6 +243,34 @@ docker compose restart gateway                # nginx re-resolves the replica li
 
 ## Uploads, review and retraining
 
+### Initial training in the UI
+
+On **Uploads & retraining**, enter the admin key and open **Train a new model from scratch**.
+Choose `cnn` or `baseline`, optionally select the quick subset check, and press **Start training
+from scratch**. `POST /jobs/train` queues the same operation. The worker uses random weights,
+prepared train/validation splits and no uploaded data. Training and retraining share one active
+job slot. Status and logs appear on the page.
+
+The result is a candidate; the currently served model is preserved. Review the validation
+results and use **Model activation & rollback** to activate a completed full-training candidate.
+The API refuses activation of smoke candidates. With no model yet, readiness is 503 but the UI
+and worker still start so you can create and activate the first model.
+
+Record on the hosted Azure app; see `docs/demo_video_plan.md` for the walkthrough and a
+read-only check of whether reserved images are already in that server's upload pool.
+
+### UI presentation and live feedback
+
+Page headings and result cards use short fade-in animations, with gentle button hover effects.
+The sidebar's **Reduce motion** switch disables animations; the operating system's reduced-motion
+preference is also respected. Styling lives in `ui/assets/motion.css`, with reusable components
+in `ui/presentation.py`. No external animation library or hosted asset is required.
+
+Prediction and upload indicators follow actual API operations. The job panel refreshes every
+three seconds while the training page is open, showing recorded status, completed epochs and
+candidate metrics. It does not estimate a completion percentage or queue work during polling.
+Single-image prediction results remain visible when the motion setting changes.
+
 ### ZIP batch predictions (no admin key required)
 
 On **Predict**, select **ZIP batch**, choose an archive and click **Classify ZIP images**.
@@ -249,8 +280,8 @@ or a rejection reason with no class/score. Download the complete list with **Dow
 All images in a batch use the same model version and the same preprocessing/input checks as single prediction.
 These uploads never enter staging, the upload database, or the training pool.
 
-API: `POST /predict/zip`, multipart field `file`. Defaults: 200 files, 100 MiB compressed,
-300 MiB expanded, 10 MiB per image (configured under `uploads`). Unsafe/corrupt/empty archives
+API: `POST /predict/zip`, multipart field `file`. Defaults: 200 files, 320 MiB compressed,
+640 MiB expanded, 10 MiB per image (configured under `uploads`). Unsafe/corrupt/empty archives
 return 400; oversized requests return 413; no model returns 503. A safe archive returns 200
 with per-file results, including rejected files. Nested archives, invalid images and images refused
 by the input checks have no prediction. CSV text cells are escaped against spreadsheet formula injection.
@@ -272,12 +303,29 @@ UI page **Uploads & retraining** (enter the admin key in the sidebar), or the AP
    exact and near-duplicate comparison against train, validation, test, retrain-demo and earlier uploads.
    *Identical or near-identical to a validation/test image → rejected (evaluation leakage).*
    Identical to training data or another upload → skipped as duplicate.
+   Files also pass the active custom CNN's calibrated input gate before staging. Rejected content
+   cannot be made eligible by selecting a class label. Uploads return HTTP 503 if calibrated
+   screening is unavailable. Admission rechecks content, fingerprints and dataset eligibility;
+   the worker also screens previously admitted images before retraining.
+   This filter can reject genuine scans and miss unrelated images; it cannot verify MRI identity
+   or medical labels. Human review remains required.
 3. **Staging & review** — passing files are stored under generated names in a staging area, with
    previews, labels, notes and reasons in the UI. A reviewer corrects labels and **admits** them after
    confirming the labels were checked by a trustworthy person. Model predictions are never used as labels.
-4. **Retrain** — the button creates a persistent job (`queued → running → succeeded | failed`) with a
-   log. The worker loads the **active custom CNN and continues training its learned weights** on the full training split plus all admitted
-   uploads (a single admitted image is enough), scores it **and** the active model on the same fixed
+   The UI shows rejection reasons separately without label controls.
+   Upload limits are 320 MiB compressed/per batch, 640 MiB expanded, 200 images and 10 MiB
+   per image, with up to 16,000 ZIP entries (files and directories). Streamlit uses 320 MiB locally and in Compose; nginx allows 330 MiB for multipart
+   overhead. The complete BRISC archive exceeds the image-count limit: use small labelled batches
+   of new images, or the reserved retrain-demo split.
+4. **Retrain** — **Retrain with this batch** is disabled until the current batch has admitted images.
+   Selecting another file or an upload failure clears that batch selection. Rejected batches cannot
+   use previously admitted images to enable this button. **Retrain with existing pool** is a separate
+   action that explicitly uses all admitted uploads across batches.
+   Each action creates a persistent job (`queued → running → succeeded | failed`) with a log and a
+   snapshot of its selected upload IDs. `POST /jobs/retrain` accepts an optional `batch_id`; the API
+   rejects a batch with no admitted images even if the existing pool is populated. Omit `batch_id`
+   to select the pool. The worker loads the **active custom CNN and continues training its learned weights**
+   on the full training split plus the selected uploads (a single admitted image is enough), scores it **and** the active model on the same fixed
    validation split, and applies the promotion rule. Prediction keeps working throughout; replicas
    hot-swap to a promoted model within ~2 s.
 5. **Promotion rule** (`config/pipeline.yaml`): promote only if candidate validation macro-F1 ≥ active
@@ -285,7 +333,7 @@ UI page **Uploads & retraining** (enter the admin key in the sidebar), or the AP
    `rejected` for inspection. The previous model is retained; **rollback** re-activates it (UI button or
    `POST /models/rollback`). The test split is never used for promotion.
 
-The database permits only one queued/running retraining job, and a single worker runs jobs serially,
+The database permits only one queued/running training or retraining job, and a single worker runs jobs serially,
 so training cannot exhaust local resources by accident. A worker restart marks an interrupted job as
 failed; nothing is promoted from a partial run.
 
@@ -463,8 +511,8 @@ deallocate/delete instructions, and the cloud load-test procedure.
 | FastAPI + Streamlit + worker + probe | Done — verified locally and in Docker |
 | Input gate (refuse non-MRI-like images, no diagnosis shown) | Done — calibrated for v001–v003; verified through the Docker gateway |
 | Upload → review → admit → background retraining → promotion / rollback | Done — full run on Docker; candidate v003 correctly not promoted; rollback demonstrated |
-| Tests | Done — 96 passed (2026-11-22) |
+| Tests | Done — 125 passed (2026-11-24), `reports/qa_tests.xml` |
 | Docker Compose with nginx load balancing; Locust 1/2/3 containers | Done — results above |
-| Azure deployment, public URL, cloud load test | **PENDING** (prepared only, see `deploy/azure/`) |
+| Azure deployment, public URL, cloud load test | Original stack deployed; latest update, current health and cloud evidence **PENDING** (see `deploy/azure/`) |
 | Demo video (YouTube) | **PENDING** (plan in `docs/demo_video_plan.md`) |
-| GitHub repository URL | **PENDING** (not published) |
+| GitHub repository URL | https://github.com/gilbmura/Mlops_structure — latest local changes still need publishing |

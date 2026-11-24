@@ -7,6 +7,7 @@ import streamlit as st
 
 from ui.api_client import ApiClient, ApiError
 from ui.charts import confusion_matrix, feature_ranges, split_counts, training_curves
+from ui.presentation import page_header
 
 
 def _metric_table(report: dict) -> pd.DataFrame:
@@ -69,7 +70,7 @@ def _render_evaluation(client: ApiClient) -> None:
 
 
 def render(client: ApiClient) -> None:
-    st.title("Data & evaluation")
+    page_header("Data & evaluation", "02 · Understand", "Explore the dataset, image features and measured model performance.")
     try:
         _render_dataset(client)
     except ApiError as exc:

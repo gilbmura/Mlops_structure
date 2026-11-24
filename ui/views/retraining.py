@@ -6,12 +6,16 @@ import pandas as pd
 import streamlit as st
 
 from ui.api_client import ApiClient, ApiError
+from ui.presentation import activity, page_header
+from ui.views.retraining_controls import clear_current_batch, render_controls
+from ui.views import job_progress, training_controls
 
 _NO_LABEL = "— no label (needs review) —"
 
 
 def _show_batch(report: dict) -> None:
-    st.success(f"Batch {report['batch_id']}: {report['counts']}")
+    st.session_state["current_upload_batch"] = report["batch_id"]
+    st.info(f"Batch {report['batch_id']}: {report['counts']}")
     rows = [
         {"file": i["original_name"], "status": i["status"], "label": i.get("label"), "reason": i.get("reason"), "notes": " | ".join(i.get("notes") or [])}
         for i in report["items"]
@@ -21,15 +25,22 @@ def _show_batch(report: dict) -> None:
 
 def _upload_section(client: ApiClient, classes: list[str]) -> None:
     st.subheader("1 · Upload labelled images")
-    mode = st.radio("Upload type", ["Single image", "Multiple images", "ZIP of class folders"], horizontal=True)
+    st.caption("Content screening runs before staging and admission. Rejected images cannot be relabelled into training. "
+               "Trusted review of MRI content and class labels is still required. "
+               "Limits: 320 MiB per batch, 640 MiB expanded ZIP, 200 images, 10 MiB per image.")
+    mode = st.radio("Upload type", ["Single image", "Multiple images", "ZIP of class folders"], horizontal=True,
+                    on_change=clear_current_batch)
     try:
         if mode == "Single image":
-            file = st.file_uploader("Image", type=["jpg", "jpeg", "png"], key="single")
+            file = st.file_uploader("Image", type=["jpg", "jpeg", "png"], key="single", on_change=clear_current_batch)
             label = st.selectbox("Label", classes)
             if file and st.button("Stage image", type="primary"):
-                _show_batch(client.upload_images([(file.name, file.getvalue())], [label]))
+                with activity("Uploading and screening the image…", "Screening complete — review the outcome below"):
+                    report = client.upload_images([(file.name, file.getvalue())], [label])
+                _show_batch(report)
         elif mode == "Multiple images":
-            files = st.file_uploader("Images", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key="multi")
+            files = st.file_uploader("Images", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key="multi",
+                                     on_change=clear_current_batch)
             shared = st.toggle("Use one label for all images", value=True)
             if shared:
                 label = st.selectbox("Shared label", classes)
@@ -38,17 +49,22 @@ def _upload_section(client: ApiClient, classes: list[str]) -> None:
                 labels = [st.selectbox(f"Label for {f.name}", [_NO_LABEL, *classes], key=f"label-{i}-{f.name}") for i, f in enumerate(files or [])]
                 labels = [None if value == _NO_LABEL else value for value in labels]
             if files and st.button("Stage images", type="primary"):
-                _show_batch(client.upload_images([(f.name, f.getvalue()) for f in files], labels))
+                with activity("Uploading and screening the images…", "Screening complete — review the outcome below"):
+                    report = client.upload_images([(f.name, f.getvalue()) for f in files], labels)
+                _show_batch(report)
         else:
             st.markdown(
                 "Folders must be named after a class: `glioma/`, `meningioma/`, `pituitary/`, `no_tumor/` — at the top of the "
                 "ZIP or inside **one** wrapper folder (e.g. `new_data/glioma/…`). One class folder is enough. Files elsewhere "
                 "are flagged *needs label*; nested archives are rejected."
             )
-            archive = st.file_uploader("ZIP archive", type=["zip"], key="zip")
+            archive = st.file_uploader("ZIP archive", type=["zip"], key="zip", on_change=clear_current_batch)
             if archive and st.button("Stage ZIP", type="primary"):
-                _show_batch(client.upload_zip(archive.name, archive.getvalue()))
+                with activity("Uploading, checking the archive and screening images…", "Screening complete — review the outcome below"):
+                    report = client.upload_zip(archive.name, archive.getvalue())
+                _show_batch(report)
     except ApiError as exc:
+        clear_current_batch()
         st.error(f"Upload failed — {exc}")
 
 
@@ -84,9 +100,16 @@ def _review_section(client: ApiClient, classes: list[str]) -> None:
     )
     try:
         pending = client.uploads("needs_label")["items"] + client.uploads("staged")["items"]
+        rejected = client.uploads("rejected")["items"]
     except ApiError as exc:
         st.error(str(exc))
         return
+    if rejected:
+        with st.expander("Rejected uploads and reasons"):
+            st.dataframe(pd.DataFrame([
+                {"file": item["original_name"], "reason": item["reason"]}
+                for item in rejected[:20]
+            ]), hide_index=True, width="stretch")
     if not pending:
         st.info("Nothing awaiting review.")
         return
@@ -102,38 +125,12 @@ def _review_section(client: ApiClient, classes: list[str]) -> None:
 
 
 def _retrain_section(client: ApiClient) -> None:
-    st.subheader("3 · Retrain")
-    counts = client.uploads()["counts"]
-    st.markdown(
-        f"Training pool: **{counts.get('admitted', 0)} admitted upload(s)**. A retraining job continues training *our saved custom CNN* "
-        "on the original training split plus all admitted uploads, then compares it with the active model on the fixed "
-        "validation split. It is promoted only if macro-F1 is within 0.01 of the active model and no class recall drops by "
-        "more than 0.05; otherwise the active model keeps serving."
-    )
-    smoke = st.checkbox("Quick demo run (2 epochs on a small subset — never promoted)")
-    if st.button("Start retraining job", type="primary"):
-        try:
-            job = client.retrain(smoke)
-            st.session_state["last_job"] = job["id"]
-            st.success(f"Queued job {job['id']}. Prediction keeps working while it runs.")
-        except ApiError as exc:
-            st.error(f"Could not start retraining — {exc}")
-
-    jobs = client.jobs(5)
-    if jobs:
-        job_ids = [j["id"] for j in jobs]
-        default = job_ids.index(st.session_state["last_job"]) if st.session_state.get("last_job") in job_ids else 0
-        job_id = st.selectbox("Inspect job", job_ids, index=default, format_func=lambda i: f"{i} ({next(j['status'] for j in jobs if j['id'] == i)})")
-        job = client.job(job_id)
-        st.json({k: job[k] for k in ("status", "created_at", "started_at", "finished_at", "error", "result")}, expanded=False)
-        if st.button("Refresh job status"):
-            st.rerun()
-        with st.expander("Job log"):
-            st.code(client.job_log(job_id) or "(empty)", language="text")
+    render_controls(client)
+    job_progress.render(client)
 
 
 def _model_admin_section(client: ApiClient) -> None:
-    st.subheader("4 · Model rollback")
+    st.subheader("4 · Model activation & rollback")
     registry = client.models()
     st.caption(f"Active: {registry['active']}")
     reason = st.text_input("Reason (recorded in the activation history)", key="rollback-reason")
@@ -144,7 +141,7 @@ def _model_admin_section(client: ApiClient) -> None:
         except ApiError as exc:
             st.error(str(exc))
     version = cols[1].selectbox("Or activate a specific version", sorted(registry["versions"]), key="activate-version")
-    if cols[1].button("Activate version", disabled=len(reason) < 3):
+    if cols[1].button("Activate version", disabled=not version or len(reason) < 3):
         try:
             st.success(f"Now serving {client.activate(version, reason)['active_version']}")
         except ApiError as exc:
@@ -152,7 +149,7 @@ def _model_admin_section(client: ApiClient) -> None:
 
 
 def render(client: ApiClient) -> None:
-    st.title("Uploads & retraining")
+    page_header("Training, uploads & retraining", "04 · Improve", "Train a candidate, review new images and follow each job as it runs.")
     if not client.admin_key:
         st.warning("Enter the admin key in the sidebar to upload data or start retraining.")
         return
@@ -161,6 +158,7 @@ def render(client: ApiClient) -> None:
     except ApiError as exc:
         st.error(str(exc))
         return
+    training_controls.render(client)
     _upload_section(client, classes)
     st.divider()
     _review_section(client, classes)

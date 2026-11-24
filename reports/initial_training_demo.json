@@ -1,0 +1,106 @@
+{
+  "checked_at": "2026-11-24T09:29:06.100752+00:00",
+  "environment": "isolated local Docker, empty registry before training",
+  "ui_render": "passed",
+  "smoke_activation_http": 409,
+  "job": {
+    "id": "24f0a4007217",
+    "kind": "train",
+    "status": "succeeded",
+    "created_at": "2026-11-24T09:27:54+00:00",
+    "started_at": "2026-11-24T09:27:55+00:00",
+    "finished_at": "2026-11-24T09:28:03+00:00",
+    "params": {
+      "architecture": "baseline",
+      "smoke": true
+    },
+    "result": {
+      "candidate_version": "v001",
+      "active_version": null,
+      "initialization": "random_weights",
+      "promoted": false,
+      "smoke": true,
+      "train_images": 96,
+      "epochs_run": 2,
+      "training_seconds": 2.9,
+      "validation": {
+        "samples": 868,
+        "accuracy": 0.2154377880184332,
+        "balanced_accuracy": 0.2553860640301318,
+        "macro_f1": 0.1297766323024055,
+        "weighted_f1": 0.11654591667062568,
+        "per_class": {
+          "glioma": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 207
+          },
+          "meningioma": {
+            "precision": 0.38666666666666666,
+            "recall": 0.1288888888888889,
+            "f1": 0.19333333333333333,
+            "support": 225
+          },
+          "pituitary": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 259
+          },
+          "no_tumor": {
+            "precision": 0.19924337957124844,
+            "recall": 0.8926553672316384,
+            "f1": 0.32577319587628867,
+            "support": 177
+          }
+        },
+        "confusion_matrix": [
+          [
+            0,
+            27,
+            0,
+            180
+          ],
+          [
+            0,
+            29,
+            0,
+            196
+          ],
+          [
+            0,
+            0,
+            0,
+            259
+          ],
+          [
+            0,
+            19,
+            0,
+            158
+          ]
+        ],
+        "class_order": [
+          "glioma",
+          "meningioma",
+          "pituitary",
+          "no_tumor"
+        ],
+        "log_loss": 1.3855191469192505,
+        "expected_calibration_error": 0.03732619856909122,
+        "tumor_detection": {
+          "sensitivity": 0.08104196816208394,
+          "specificity": 0.8926553672316384,
+          "accuracy": 0.2465437788018433,
+          "false_negatives": 635,
+          "false_positives": 19
+        },
+        "macro_roc_auc_ovr": 0.696723457675136
+      },
+      "next_step": "Smoke candidates cannot be activated."
+    },
+    "error": null,
+    "log_path": "/app/state/jobs/24f0a4007217.log"
+  }
+}

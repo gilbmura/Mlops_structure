@@ -18,6 +18,7 @@ import json
 import logging
 import uuid
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -34,6 +35,10 @@ from utils.images import ImageDecodeError, channel_spread, decode_image
 logger = logging.getLogger(__name__)
 
 _EXTENSIONS = {"JPEG": ".jpg", "PNG": ".png"}
+
+
+class ContentScreeningUnavailable(RuntimeError):
+    """Calibrated content checks cannot currently be performed."""
 
 
 class UploadRejectedError(ValueError):
@@ -61,6 +66,7 @@ class IngestionService:
         limits: UploadLimits,
         thumbnail_size: int,
         colour_threshold: float,
+        content_check: Callable[[bytes], list[str]] | None = None,
     ) -> None:
         self.store = store
         self.staging_dir = Path(staging_dir)
@@ -68,6 +74,7 @@ class IngestionService:
         self.limits = limits
         self.thumbnail_size = thumbnail_size
         self.colour_threshold = colour_threshold
+        self.content_check = content_check
 
     def ingest_files(self, files: list[IncomingFile]) -> dict:
         """Screen individually uploaded images (single or multiple)."""
@@ -83,7 +90,7 @@ class IngestionService:
         """Screen every image inside a class-folder ZIP. Unsafe archives raise ``UnsafeArchiveError``."""
         if len(data) > self.limits.max_batch_bytes:
             raise UploadRejectedError(f"ZIP exceeds {self.limits.max_batch_bytes // (1024 * 1024)} MiB.")
-        entries, skipped = read_zip(data, self.limits)
+        entries, skipped = read_zip(data, self.limits, max_files=self.limits.max_files_per_batch)
         if len(entries) > self.limits.max_files_per_batch:
             raise UploadRejectedError(f"ZIP contains {len(entries)} images; the limit is {self.limits.max_files_per_batch} per batch.")
         if not entries and not skipped:
@@ -119,6 +126,11 @@ class IngestionService:
         if verdict.status != "ok":
             return self._record(batch_id, incoming.name, verdict.status, reason=verdict.reason, notes=notes, **details)
 
+        reasons = self.check_content(incoming.data)
+        if reasons:
+            return self._record(batch_id, incoming.name, REJECTED,
+                                reason="Unsupported image - cannot be used for retraining: " + "; ".join(reasons), **details)
+
         label, label_problem = self._resolve_label(incoming)
         upload_id = uuid.uuid4().hex[:16]
         stored = self.staging_dir / batch_id / f"{upload_id}{_EXTENSIONS[image.format]}"
@@ -129,6 +141,37 @@ class IngestionService:
             batch_id, incoming.name, status, upload_id=upload_id, label=label, reason=label_problem,
             notes=notes, stored_path=str(stored), **details,
         )
+
+    def check_content(self, data: bytes) -> list[str]:
+        """Fail closed when the calibrated content screener is unavailable."""
+        if self.content_check is None:
+            raise ContentScreeningUnavailable("Content screening is unavailable; no images can be admitted.")
+        return self.content_check(data)
+
+    def admit(self, upload_ids: list[str]) -> list[str]:
+        """Recheck stored bytes, including legacy staged uploads, before admission."""
+        eligible = []
+        for upload_id in dict.fromkeys(upload_ids):
+            row = self.store.get(upload_id)
+            if not row or row["status"] != STAGED:
+                continue
+            try:
+                data = Path(row["stored_path"]).read_bytes()
+                image = decode_image(data, self.limits.image)
+                if len(data) > self.limits.max_file_bytes:
+                    raise ValueError("Stored image exceeds the per-image limit.")
+                fp = fingerprint(image, self.thumbnail_size)
+                if fp.pixel_hash != row["pixel_hash"]:
+                    raise ValueError("Stored image changed since upload; upload it again.")
+                verdict = judge(self.index.matches(fp), None)
+                reasons = ([verdict.reason] if verdict.status != "ok" else []) + self.check_content(data)
+                if reasons:
+                    self.store.reject(upload_id, "Unsupported or ineligible image: " + "; ".join(reasons))
+                else:
+                    eligible.append(upload_id)
+            except (OSError, ImageDecodeError, ValueError) as exc:
+                self.store.reject(upload_id, str(exc))
+        return self.store.admit(eligible)
 
     @staticmethod
     def _resolve_label(incoming: IncomingFile) -> tuple[str | None, str | None]:

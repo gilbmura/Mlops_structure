@@ -1,0 +1,79 @@
+/* Native Streamlit colours keep these components legible in light and dark themes. */
+.mri-heading {
+    border-left: 3px solid #2aa89a;
+    padding: .25rem 0 .25rem 1.25rem;
+    margin: .25rem 0 1.5rem;
+}
+.mri-eyebrow {
+    font-size: .72rem;
+    font-weight: 650;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin: 0 0 .65rem;
+}
+.mri-heading h1 {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    line-height: 1.18;
+    letter-spacing: -.035em;
+    padding: 0;
+    margin: 0 0 .65rem;
+}
+.mri-description { margin: 0; line-height: 1.65; font-size: .95rem; }
+.mri-card {
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    border-top: 3px solid #2aa89a;
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    margin: .3rem 0 1rem;
+    background: linear-gradient(115deg, rgba(42, 168, 154, .08), transparent 75%);
+    overflow-wrap: anywhere;
+}
+.mri-card h3 { font-size: 1.3rem; line-height: 1.4; padding: 0; margin: 0 0 .5rem; }
+.mri-activity {
+    display: inline-block;
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    margin-right: .65rem;
+    background: #2aa89a;
+    animation: mri-pulse 1.8s ease-in-out infinite;
+}
+.mri-enter { animation: mri-reveal 380ms ease-out both; }
+@keyframes mri-reveal {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mri-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .4; }
+}
+/* Limit native-widget selectors to stable test IDs in the pinned Streamlit version. */
+[data-testid="stButton"] button,
+[data-testid="stDownloadButton"] button {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+[data-testid="stButton"] button:enabled:hover,
+[data-testid="stDownloadButton"] button:enabled:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+}
+[data-testid="stButton"] button:enabled:active { transform: translateY(0); }
+[data-testid="stButton"] button:focus-visible,
+[data-testid="stDownloadButton"] button:focus-visible {
+    outline: 2px solid #2aa89a;
+    outline-offset: 3px;
+}
+[data-testid="stFileUploaderDropzone"] { transition: border-color 180ms ease, background-color 180ms ease; }
+[data-testid="stFileUploaderDropzone"]:hover { border-color: #2aa89a; }
+[data-testid="stMetric"] {
+    border-left: 2px solid rgba(42, 168, 154, .5);
+    padding-left: .8rem;
+}
+@media (max-width: 640px) {
+    .mri-heading { padding-left: .85rem; }
+    .mri-card { padding: 1rem; }
+}
+/* Honour the OS preference even when the in-app switch is off. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

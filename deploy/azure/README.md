@@ -1,8 +1,11 @@
-# Azure deployment plan (prepared, **not yet executed**)
+# Azure deployment and verification
 
-> **Status: PENDING.** No Azure resources have been created and no credit has been spent.
-> The public URL, cloud health checks and cloud load-test results do not exist yet and
-> must not be reported until this plan is actually carried out.
+> A VM was provisioned and the original stack was deployed on 2026-11-23 at
+> https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com.
+> The latest upload and batch-retraining changes have only been applied locally.
+> Azure CLI confirmed `PowerState/deallocated` on 2026-11-24; the VM was left stopped
+> at the owner's request. Cloud health, upload history, the updated release and cloud
+> load-test evidence still need verification after it is started.
 
 ## Recommended target: one Linux VM running the same Docker Compose stack
 
@@ -28,7 +31,7 @@ scaling, not high availability.
 
 ## Cost control (student subscription)
 
-* Check the current hourly price of the chosen size (default `Standard_B2ms`) for your region
+* Check the current hourly price of the chosen size (default `Standard_B2as_v2`) for your region
   in the [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator/) before deploying;
   prices are not hard-coded here because they change and vary by region.
 * Create a **budget with e-mail alerts** (Cost Management → Budgets) well below the $100 credit.
@@ -37,6 +40,8 @@ scaling, not high availability.
 * Stop when idle: `az vm deallocate -g rg-brain-mri -n vm-brain-mri` (start again with `az vm start`).
 * Remove everything when the assessment is over: `az group delete -n rg-brain-mri` (irreversible).
 * Retraining on 2 vCPUs is slower than locally; prefer the *quick demo run* for live demonstrations.
+* The Azure override caps the worker at one CPU by default (`AZURE_WORKER_CPUS` overrides it),
+  rather than inheriting the local four-CPU limit. Leave CPU headroom for prediction during training.
 
 ## Steps (when you decide to deploy)
 
@@ -76,7 +81,9 @@ certificate is not publicly trusted; on Azure, Let's Encrypt provides a trusted 
 Run the same workload as locally, from your own machine, against the HTTPS endpoint:
 
 ```powershell
-docker compose up -d --scale api=N; docker compose restart gateway   # on the VM, N = 1, 2, 3
+docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml up -d --scale api=N
+docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml restart gateway
+# Run the two commands above on the VM with N = 1, 2, 3; retain the Azure override.
 python -m locust -f loadtest/locustfile.py --headless --host https://<host>/api -u 60 -r 10 -t 120s --reset-stats --csv loadtest/results/azure/<N>_replicas/locust
 ```
 
@@ -86,6 +93,6 @@ network latency is included. Results here will differ from the local ones; do no
 
 | Item | Status |
 |---|---|
-| Azure public URL | PENDING |
+| Azure public URL | https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com (current reachability unverified) |
 | Cloud health / availability evidence | PENDING |
 | Cloud load test (1/2/3 replicas) | PENDING |

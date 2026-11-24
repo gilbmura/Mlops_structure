@@ -57,6 +57,12 @@ class AdmitRequest(BaseModel):
 
 class RetrainRequest(BaseModel):
     smoke: bool = Field(default=False, description="Tiny 2-epoch run to exercise the pipeline quickly")
+    batch_id: str | None = Field(default=None, min_length=1, description="Only admitted images from this batch; omit for the existing pool")
+
+
+class TrainRequest(BaseModel):
+    architecture: Literal["baseline", "cnn"] = "cnn"
+    smoke: bool = False
 
 
 class ActivationRequest(BaseModel):

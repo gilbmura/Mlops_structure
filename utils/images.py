@@ -32,7 +32,7 @@ def decode_image(data: bytes, limits: ImageLimits = ImageLimits()) -> Image.Imag
     """
     try:
         image = Image.open(io.BytesIO(data))
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
         raise ImageDecodeError("File content is not a recognised image.") from exc
     if image.format not in ALLOWED_FORMATS:
         raise ImageDecodeError(f"Unsupported image format {image.format!r}; use JPEG or PNG.")

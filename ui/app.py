@@ -16,6 +16,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # `streamlit run` only adds ui/ to the path
 
 from ui.api_client import ApiClient  # noqa: E402
+from ui.presentation import apply_styles  # noqa: E402
 from ui.views import insights, predict, retraining, status  # noqa: E402
 
 st.set_page_config(page_title="Brain MRI classifier (educational)", page_icon="🧠", layout="wide")
@@ -25,6 +26,10 @@ with st.sidebar:
     api_url = os.environ.get("API_URL", "http://127.0.0.1:8000").rstrip("/")
     st.caption(f"API: `{api_url}`")
     admin_key = st.text_input("Admin key (uploads & retraining)", type="password")
+    st.divider()
+    reduce_motion = st.toggle("Reduce motion", key="reduce_motion", help="Disable UI animations. Your device's reduced-motion setting is also respected.")
+
+apply_styles(reduce_motion)
 
 client = ApiClient(api_url, admin_key)
 pages = [

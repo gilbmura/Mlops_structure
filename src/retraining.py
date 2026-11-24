@@ -18,6 +18,9 @@ from config.settings import Settings
 from src.dataset.manifests import Sample
 from src.evaluation import evaluate_model
 from src.labels import CLASS_NAMES
+from src.prediction import Predictor
+from src.ingestion.content import screen_content
+from src.ingestion.service import ContentScreeningUnavailable
 from src.pipeline import load_training_data, run_training
 from src.preprocessing import PreprocessingSpec
 from src.promotion import decide_promotion
@@ -31,19 +34,24 @@ class RetrainingError(RuntimeError):
     """Raised when retraining cannot start or produce a valid candidate."""
 
 
-def _admitted_samples(uploads: UploadStore) -> list[Sample]:
+def _admitted_samples(uploads: UploadStore, upload_ids: list[str] | None = None) -> list[Sample]:
+    selected = set(upload_ids) if upload_ids is not None else None
     samples = []
     for row in uploads.admitted():
+        if selected is not None and row["id"] not in selected:
+            continue
         path = Path(row["stored_path"])
         if not path.is_file():
             raise RetrainingError(f"Admitted upload {row['id']} is missing its file at {path}.")
         samples.append(Sample(f"upload-{row['id']}", row["label"], path))
+    if selected is not None and len(samples) != len(selected):
+        raise RetrainingError("A selected upload is no longer admitted; submit a new retraining request.")
     return samples
 
 
 def run_retraining(job_id: str, params: dict, settings: Settings, config: dict, registry: ModelRegistry, uploads: UploadStore) -> dict:
     """Train, compare and (maybe) promote. Returns a JSON-serialisable job result."""
-    samples = _admitted_samples(uploads)
+    samples = _admitted_samples(uploads, params.get("upload_ids"))
     if not samples:
         raise RetrainingError("Admit at least one reviewed upload before retraining.")
     active = registry.active_version()
@@ -60,7 +68,17 @@ def run_retraining(job_id: str, params: dict, settings: Settings, config: dict, 
     config["training"]["learning_rate"] = config["retraining"]["learning_rate"]
     config["training"]["architecture"] = parent["architecture"]
     logger.info("Job %s: continuing custom model %s with %d admitted uploads", job_id, active, len(samples))
+    # Old admitted rows are not trusted merely because they predate upload screening.
+    predictor = Predictor.from_registry(registry, config, active)
+    for sample in samples:
+        try:
+            reasons = screen_content(lambda: predictor, sample.path.read_bytes())
+        except (ContentScreeningUnavailable, OSError, ValueError) as exc:
+            raise RetrainingError(f"Cannot screen admitted upload {sample.sample_id}: {exc}") from exc
+        if reasons:
+            raise RetrainingError(f"Admitted upload {sample.sample_id} failed content screening: {'; '.join(reasons)}")
     data = load_training_data(settings, config, samples)
+    del predictor
     initial_model = registry.load_model(active)
     active_metrics = evaluate_model(initial_model, data.x_val, data.y_val)[0]
 

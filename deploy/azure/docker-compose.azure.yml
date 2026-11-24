@@ -28,10 +28,18 @@ services:
   gateway:
     ports: !reset []   # reachable only through Caddy
 
+  worker:
+    deploy:
+      resources:
+        limits:
+          # The deployed B2as_v2 has two vCPUs; do not inherit the local four-CPU quota.
+          cpus: "${AZURE_WORKER_CPUS:-1.0}"
+
   ui:
     ports: !reset []
     environment:
       API_URL: http://gateway:8000
+      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: "320"
 
 volumes:
   caddy_data:

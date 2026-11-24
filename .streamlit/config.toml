@@ -1,0 +1,3 @@
+[server]
+# Match the Docker UI and API upload limit when running Streamlit locally.
+maxUploadSize = 320

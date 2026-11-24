@@ -17,7 +17,7 @@ param(
     [string] $ResourceGroup = "rg-brain-mri",
     [string] $Location = "southafricanorth",
     [string] $VmName = "vm-brain-mri",
-    [string] $VmSize = "Standard_B2ms",                 # 2 vCPU / 8 GiB; check availability + price in your region
+    [string] $VmSize = "Standard_B2as_v2",              # 2 vCPU / 8 GiB; matches the deployed student VM
     [string] $AutoShutdownUtc = "1900",                 # daily automatic shutdown (HHmm, UTC)
     [switch] $Execute
 )

@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 -- At most one queued or running job per kind: prevents concurrent training runs.
 CREATE UNIQUE INDEX IF NOT EXISTS jobs_one_active_per_kind ON jobs(kind) WHERE status IN ('queued', 'running');
+-- Training from scratch and retraining share the same worker/resource budget.
+CREATE UNIQUE INDEX IF NOT EXISTS jobs_one_active_training ON jobs((1))
+    WHERE kind IN ('train', 'retrain') AND status IN ('queued', 'running');
 
 CREATE TABLE IF NOT EXISTS uploads (
     id TEXT PRIMARY KEY,

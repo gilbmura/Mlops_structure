@@ -12,7 +12,7 @@ from api.dependencies import AdminDep, ServicesDep, read_upload
 from api.schemas import AdmitRequest, LabelUpdate
 from api.services import Services
 from src.ingestion.archive import UnsafeArchiveError
-from src.ingestion.service import IncomingFile, IngestionService, UploadRejectedError
+from src.ingestion.service import ContentScreeningUnavailable, IncomingFile, IngestionService, UploadRejectedError
 from src.labels import UnknownLabelError
 from src.storage.uploads import UploadStateError
 
@@ -64,6 +64,8 @@ def upload_images(
     ]
     try:
         report = ingestion.ingest_files(incoming)
+    except ContentScreeningUnavailable as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     except UploadRejectedError as exc:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc)) from exc
     return {**report, "items": [_public(i) for i in report["items"]]}
@@ -78,6 +80,8 @@ def upload_zip(services: ServicesDep, file: UploadFile = File(..., description="
         report = ingestion.ingest_zip(data)
     except UnsafeArchiveError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"ZIP rejected: {exc}") from exc
+    except ContentScreeningUnavailable as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     except UploadRejectedError as exc:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc)) from exc
     return {**report, "items": [_public(i) for i in report["items"]]}
@@ -121,5 +125,8 @@ def admit(services: ServicesDep, body: AdmitRequest) -> dict:
     """Admit reviewed, labelled uploads into the training pool used by the next retraining job."""
     if not body.confirm_labels_reviewed:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Confirm that the labels were reviewed before admitting uploads.")
-    admitted = services.uploads.admit(body.upload_ids)
+    try:
+        admitted = _ingestion(services).admit(body.upload_ids)
+    except ContentScreeningUnavailable as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     return {"admitted": admitted, "not_admitted": [i for i in body.upload_ids if i not in admitted], "counts": services.uploads.counts()}

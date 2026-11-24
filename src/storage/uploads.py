@@ -96,6 +96,14 @@ class UploadStore:
             raise UploadStateError(f"Upload {upload_id} is not awaiting review.")
         return self.get(upload_id)
 
+    def reject(self, upload_id: str, reason: str) -> None:
+        """Invalidate a previously staged image; labels cannot restore eligibility."""
+        with self.db.transaction() as conn:
+            conn.execute(
+                "UPDATE uploads SET status = ?, reason = ?, updated_at = ? WHERE id = ? AND status IN (?, ?)",
+                (REJECTED, reason, utc_now(), upload_id, STAGED, NEEDS_LABEL),
+            )
+
     def admit(self, upload_ids: list[str]) -> list[str]:
         """Move reviewed, labelled uploads into the training pool. Returns the ids admitted."""
         now = utc_now()

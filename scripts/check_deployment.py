@@ -55,16 +55,25 @@ def run_upload_and_retrain(api: str, key: str, archive: Path, mode: str, failure
                            files={"file": (archive.name, archive.read_bytes(), "application/zip")})
     _check(report.status_code == 200, f"ZIP upload returned {report.status_code}: {report.text[:200]}", failures)
     batch = report.json()
+    if report.status_code != 200:
+        return {"upload_status": report.status_code}
     staged = [item["id"] for item in batch.get("items", []) if item["status"] == "staged"]
     result = {"batch_id": batch.get("batch_id"), "upload_counts": batch.get("counts")}
     if staged:
-        admitted = requests.post(f"{api}/uploads/admit", headers=headers, timeout=60,
-                                 json={"upload_ids": staged, "confirm_labels_reviewed": True}).json()
-        result["admitted"] = len(admitted["admitted"])
+        admitted = requests.post(f"{api}/uploads/admit", headers=headers, timeout=300,
+                                 json={"upload_ids": staged, "confirm_labels_reviewed": True})
+        _check(admitted.status_code == 200, f"Admission returned {admitted.status_code}", failures)
+        if admitted.status_code != 200:
+            return result
+        result["admitted"] = len(admitted.json()["admitted"])
     if mode == "none":
         return result
+    if not result.get("admitted"):
+        _check(False, "This upload admitted no images; refusing to retrain an unrelated existing pool.", failures)
+        return result
 
-    job = requests.post(f"{api}/jobs/retrain", headers=headers, json={"smoke": mode == "smoke"}, timeout=30)
+    job = requests.post(f"{api}/jobs/retrain", headers=headers,
+                        json={"smoke": mode == "smoke", "batch_id": batch["batch_id"]}, timeout=30)
     _check(job.status_code == 202, f"retrain request returned {job.status_code}: {job.text[:200]}", failures)
     if job.status_code != 202:
         return result
