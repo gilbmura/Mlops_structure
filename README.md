@@ -1,9 +1,12 @@
-# Brain MRI Tumour Classifier — BRISC 2025 (educational ML-cycle project)
+# Brain MRI Tumour Classifier  BRISC 2025 (educational ML-cycle project)
 
-> **Educational prototype — not a diagnostic service.** The model sorts a single brain MRI
+> **Educational prototype  not a diagnostic service.** The model sorts a single brain MRI
 > slice into one of four classes it was trained on. Its confidence is a model score, not a
-> clinical probability, and it can be confidently wrong — including on images that are not
+> clinical probability, and it can be confidently wrong  including on images that are not
 > brain MRI slices.
+
+
+**For the admin key for retraining you can check the readme which is in the zipped folder**
 
 **My mission** is to improve access to practical healthcare education in Africa by developing
 digital learning tools that help students explore medical imaging and understand the responsible
