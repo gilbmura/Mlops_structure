@@ -90,15 +90,7 @@ Dataset exploration: [three feature interpretations](#dataset-insights).
 
 ## Architecture
 
-```
-browser ─▶ Streamlit UI ─HTTP─▶ nginx gateway ─least_conn─▶ FastAPI replica × N ─── reads active model ──┐
-                                     ▲                         │ writes jobs / uploads                    │
-                     GET /health     │                         ▼                                          ▼
-                     every 30 s    probe ─── records ─▶  SQLite (state volume)            models/ registry
-                                                               ▲ claims one job at a time                 ▲
-                                                               └──────── worker ── trains, evaluates, ────┘
-                                                                                   registers, promotes
-```
+![Project architecture: Azure VM with Caddy, Streamlit, nginx, FastAPI replicas, worker, health probe and persistent storage](docs/images/architecture.png)
 
 * **API** (`api/`) — prediction, uploads, review, job status, model status, rollback. Never trains.
 * **Worker** (`worker/main.py`) — runs queued jobs one at a time, outside any web request.
