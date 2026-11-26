@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import stat
 import zipfile
+from dataclasses import replace
 
 import pytest
 from PIL import Image
@@ -201,7 +202,17 @@ def test_screening_unavailable_blocks_staging_and_admission(service, store):
     assert not store.admitted()
 
 
+@pytest.mark.parametrize("count", [15591, 16000])
+def test_large_zip_within_limits_passes_archive_validation(config, count):
+    limits = UploadLimits.from_config(config)
+    data = _zip({f"glioma/{i}.jpg": b"image" for i in range(count)})
+    entries, skipped = read_zip(data, limits, max_files=limits.max_files_per_batch)
+    assert len(entries) == count and not skipped
+
+
 def test_oversized_batch_is_rejected_before_decompression(service, monkeypatch):
+    # Keep the file limit below the entry limit to exercise both guards independently.
+    service.limits = replace(service.limits, max_files_per_batch=2)
     data = _zip({f"glioma/{i}.jpg": b"image" for i in range(service.limits.max_files_per_batch + 1)})
 
     def unexpected_read(*args, **kwargs):

@@ -8,7 +8,7 @@ import streamlit as st
 from ui.api_client import ApiClient, ApiError
 from ui.presentation import activity, page_header
 from ui.views.retraining_controls import clear_current_batch, render_controls
-from ui.views import job_progress, training_controls
+from ui.views import job_progress, training_controls, upload_progress
 
 _NO_LABEL = "— no label (needs review) —"
 
@@ -27,7 +27,8 @@ def _upload_section(client: ApiClient, classes: list[str]) -> None:
     st.subheader("1 · Upload labelled images")
     st.caption("Content screening runs before staging and admission. Rejected images cannot be relabelled into training. "
                "Trusted review of MRI content and class labels is still required. "
-               "Limits: 320 MiB per batch, 640 MiB expanded ZIP, 200 images, 10 MiB per image.")
+               "Limits: 320 MiB per batch, 640 MiB expanded ZIP, 16,000 files per batch, 10 MiB per image. "
+               "ZIPs also have a 16,000-entry limit including folders.")
     mode = st.radio("Upload type", ["Single image", "Multiple images", "ZIP of class folders"], horizontal=True,
                     on_change=clear_current_batch)
     try:
@@ -59,13 +60,17 @@ def _upload_section(client: ApiClient, classes: list[str]) -> None:
                 "are flagged *needs label*; nested archives are rejected."
             )
             archive = st.file_uploader("ZIP archive", type=["zip"], key="zip", on_change=clear_current_batch)
+            st.caption("The ZIP is saved first, then screened in the background. Follow its progress below.")
             if archive and st.button("Stage ZIP", type="primary"):
-                with activity("Uploading, checking the archive and screening images…", "Screening complete — review the outcome below"):
-                    report = client.upload_zip(archive.name, archive.getvalue())
-                _show_batch(report)
+                clear_current_batch()
+                with activity("Receiving the ZIP…", "Archive received — screening queued"):
+                    job = client.upload_zip(archive.name, archive.getvalue())
+                st.session_state["last_upload_job"] = job["id"]
+                st.success(f"Upload job {job['id']} is {job['status']}. Follow ZIP processing status below.")
     except ApiError as exc:
         clear_current_batch()
         st.error(f"Upload failed — {exc}")
+    upload_progress.render(client)
 
 
 def _review_item(client: ApiClient, item: dict, classes: list[str]) -> bool:
@@ -98,22 +103,27 @@ def _review_section(client: ApiClient, classes: list[str]) -> None:
         "Labels typed by uploaders are not verified ground truth. Only admit images whose labels a trustworthy, qualified "
         "person has checked. Model predictions are never used as labels."
     )
+    batch_id = st.session_state.get("current_upload_batch")
+    if batch_id:
+        st.caption(f"Reviewing batch {batch_id}.")
+    filters = {"Images awaiting review": "review", "Rejected files": "rejected", "Duplicate files": "duplicate"}
+    selected_filter = st.selectbox("Results to inspect", list(filters))
+    status = filters[selected_filter]
+    page = int(st.number_input("Results page", min_value=1, step=1, key=f"review-page-{batch_id}-{status}"))
     try:
-        pending = client.uploads("needs_label")["items"] + client.uploads("staged")["items"]
-        rejected = client.uploads("rejected")["items"]
+        report = client.uploads(status, batch_id=batch_id, limit=25, offset=(page - 1) * 25)
     except ApiError as exc:
         st.error(str(exc))
         return
-    if rejected:
-        with st.expander("Rejected uploads and reasons"):
-            st.dataframe(pd.DataFrame([
-                {"file": item["original_name"], "reason": item["reason"]}
-                for item in rejected[:20]
-            ]), hide_index=True, width="stretch")
-    if not pending:
-        st.info("Nothing awaiting review.")
+    st.caption(f"{report['total']:,} matching files · 25 per page. Incomplete ZIP batches cannot be reviewed or admitted.")
+    if not report["items"]:
+        st.info("No files on this page.")
         return
-    selected = [item["id"] for item in pending if _review_item(client, item, classes)]
+    if status != "review":
+        st.dataframe(pd.DataFrame([{"file": item["original_name"], "reason": item["reason"]}
+                                   for item in report["items"]]), hide_index=True, width="stretch")
+        return
+    selected = [item["id"] for item in report["items"] if _review_item(client, item, classes)]
     confirmed = st.checkbox("I confirm the selected labels were reviewed by a trustworthy person.")
     if st.button(f"Admit {len(selected)} selected upload(s) to the training pool", disabled=not (selected and confirmed)):
         try:

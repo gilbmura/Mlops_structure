@@ -8,8 +8,9 @@ def _app():
     from ui.views.retraining_controls import clear_current_batch, render_controls
 
     class Client:
-        def uploads(self, status=None, batch_id=None):
-            return {"counts": {"admitted": 100}, "items": [{"id": "good"}] if batch_id == "accepted" else []}
+        def uploads(self, status=None, batch_id=None, limit=500):
+            return {"counts": {"admitted": 100}, "total": 1200 if batch_id == "accepted" else 0,
+                    "items": [{"id": "good"}] if batch_id == "accepted" else []}
 
         def retrain(self, smoke, batch_id=None):
             st.session_state["requested_batch"] = batch_id
@@ -35,6 +36,7 @@ def test_admitted_batch_enabled_and_selection_change_clears_it():
     app.session_state["current_upload_batch"] = "accepted"
     app.run()
     assert not app.button[1].disabled
+    assert any("1,200 admitted" in item.value for item in app.markdown)
     app.button[1].click().run()
     assert app.session_state["requested_batch"] == "accepted"
     app.button[0].click().run()

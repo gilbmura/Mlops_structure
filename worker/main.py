@@ -21,9 +21,10 @@ from src.registry import ModelRegistry
 from src.initial_training import run_initial_training
 from src.retraining import run_retraining
 from src.storage.database import Database
-from src.storage.jobs import FAILED, TRAIN, RETRAIN, SUCCEEDED, JobStore
+from src.storage.jobs import FAILED, TRAIN, RETRAIN, UPLOAD, SUCCEEDED, JobStore
 from src.storage.uploads import UploadStore
 from utils.log import add_file_handler, configure_logging
+from worker.uploads import recover_upload, run_upload
 
 logger = logging.getLogger("worker")
 
@@ -33,9 +34,11 @@ POLL_SECONDS = 3.0
 def _handlers(settings: Settings, config: dict, database: Database) -> dict[str, Callable[[dict], dict]]:
     registry = ModelRegistry(settings.models_dir)
     uploads = UploadStore(database)
+    jobs = JobStore(database, settings.job_logs_dir)
     return {
         TRAIN: lambda job: run_initial_training(job["id"], job["params"], settings, config, registry),
         RETRAIN: lambda job: run_retraining(job["id"], job["params"], settings, config, registry, uploads),
+        UPLOAD: lambda job: run_upload(job, settings, config, jobs, uploads),
     }
 
 
@@ -71,7 +74,9 @@ def main() -> None:
     configure_logging(settings.log_level)
     database = Database(settings.database_path)
     jobs = JobStore(database, settings.job_logs_dir)
-    orphaned = jobs.fail_orphaned("Worker restarted while this job was running; no model was promoted.")
+    interrupted_upload = jobs.active(UPLOAD)
+    orphaned = jobs.fail_orphaned("Worker restarted while this job was running. Submit a new job to try again.")
+    recover_upload(interrupted_upload, settings, UploadStore(database))
     if orphaned:
         logger.warning("Marked %d interrupted job(s) as failed", orphaned)
     handlers = _handlers(settings, load_pipeline_config(), database)

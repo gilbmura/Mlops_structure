@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 );
 CREATE INDEX IF NOT EXISTS uploads_status ON uploads(status);
 CREATE INDEX IF NOT EXISTS uploads_pixel_hash ON uploads(pixel_hash);
+CREATE INDEX IF NOT EXISTS uploads_batch_status ON uploads(batch_id, status);
 
 CREATE TABLE IF NOT EXISTS health_probes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

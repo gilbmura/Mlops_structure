@@ -22,7 +22,8 @@ import stat
 import zipfile
 import zlib
 from dataclasses import dataclass
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
+from typing import BinaryIO, Iterator
 
 from src.ingestion.limits import UploadLimits
 from src.labels import UnknownLabelError, normalize_label
@@ -90,59 +91,85 @@ def _skip_reason(path: PurePosixPath, info: zipfile.ZipInfo, limits: UploadLimit
     return None
 
 
-def read_zip(data: bytes, limits: UploadLimits, *, infer_labels: bool = True,
-             max_files: int | None = None) -> tuple[list[ArchiveEntry], list[SkippedEntry]]:
-    """Validate an uploaded ZIP and return its candidate image entries in memory.
+class ZipReader:
+    """Validate metadata up front, then decompress at most one bounded image at a time."""
 
-    Nothing is written to disk here; callers stage only entries that later pass
-    image-content screening.
-    """
-    if len(data) > limits.max_batch_bytes:
-        raise UnsafeArchiveError("ZIP exceeds the compressed upload size limit.")
-    try:
-        archive = zipfile.ZipFile(io.BytesIO(data))
-    except zipfile.BadZipFile as exc:
-        raise UnsafeArchiveError("The upload is not a valid ZIP file.") from exc
+    def __init__(self, source: Path | BinaryIO, limits: UploadLimits, *,
+                 max_files: int | None = None, infer_labels: bool = True):
+        self.source, self.limits = source, limits
+        self.max_files, self.infer_labels = max_files, infer_labels
 
-    with archive:
-        all_infos = archive.infolist()
-        if len(all_infos) > limits.max_zip_entries:
-            raise UnsafeArchiveError(f"ZIP has {len(all_infos)} entries; the limit is {limits.max_zip_entries}.")
-        for info in all_infos:
+    def __enter__(self):
+        if isinstance(self.source, Path):
+            size = self.source.stat().st_size
+        else:
+            size = self.source.seek(0, io.SEEK_END)
+            self.source.seek(0)
+        if size > self.limits.max_batch_bytes:
+            raise UnsafeArchiveError("ZIP exceeds the compressed upload size limit.")
+        try:
+            self.archive = zipfile.ZipFile(self.source)
+        except zipfile.BadZipFile as exc:
+            raise UnsafeArchiveError("The upload is not a valid ZIP file.") from exc
+        try:
+            self.infos = self._validate()
+        except BaseException:
+            self.archive.close()
+            raise
+        return self
+
+    def __exit__(self, *_):
+        self.archive.close()
+
+    def _validate(self) -> list[zipfile.ZipInfo]:
+        infos = self.archive.infolist()
+        if len(infos) > self.limits.max_zip_entries:
+            raise UnsafeArchiveError(f"ZIP has {len(infos)} entries; the limit is {self.limits.max_zip_entries}.")
+        for info in infos:
             _check_name(info.filename)
             if stat.S_ISLNK(info.external_attr >> 16):
                 raise UnsafeArchiveError(f"Entry {info.filename!r} is a symbolic link.")
-        infos = [info for info in all_infos if not info.is_dir()]
-        if max_files is not None and len(infos) > max_files:
-            raise UnsafeArchiveError(f"ZIP has {len(infos)} files; the batch limit is {max_files}.")
-        declared = sum(info.file_size for info in infos)
-        if declared > limits.max_zip_uncompressed_bytes:
-            raise UnsafeArchiveError(f"ZIP would expand to {declared:,} bytes; the limit is {limits.max_zip_uncompressed_bytes:,}.")
-
-        entries: list[ArchiveEntry] = []
-        skipped: list[SkippedEntry] = []
-        total = 0
-        for info in infos:
-            path = _check_name(info.filename)
-            if info.compress_size and info.file_size / info.compress_size > limits.max_compression_ratio:
+        files = [info for info in infos if not info.is_dir()]
+        if self.max_files is not None and len(files) > self.max_files:
+            raise UnsafeArchiveError(f"ZIP has {len(files)} files; the batch limit is {self.max_files}.")
+        declared = sum(info.file_size for info in files)
+        if declared > self.limits.max_zip_uncompressed_bytes:
+            raise UnsafeArchiveError(f"ZIP would expand to {declared:,} bytes; the limit is {self.limits.max_zip_uncompressed_bytes:,}.")
+        for info in files:
+            if info.compress_size and info.file_size / info.compress_size > self.limits.max_compression_ratio:
                 raise UnsafeArchiveError(f"Entry {info.filename!r} has a suspicious compression ratio (possible ZIP bomb).")
-            reason = _skip_reason(path, info, limits)
+        return files
+
+    def __iter__(self) -> Iterator[ArchiveEntry | SkippedEntry]:
+        total = 0
+        for info in self.infos:
+            path = _check_name(info.filename)
+            reason = _skip_reason(path, info, self.limits)
             if reason:
-                skipped.append(SkippedEntry(info.filename, reason))
+                yield SkippedEntry(info.filename, reason)
                 continue
             try:
-                with archive.open(info) as handle:
-                    content = handle.read(info.file_size + 1)  # never trust the header beyond one extra byte
+                with self.archive.open(info) as handle:
+                    content = handle.read(info.file_size + 1)
             except (zipfile.BadZipFile, RuntimeError, NotImplementedError, EOFError, zlib.error) as exc:
                 raise UnsafeArchiveError(f"Cannot read ZIP entry {info.filename!r}: corrupt or unsupported archive.") from exc
             if len(content) != info.file_size:
                 raise UnsafeArchiveError(f"Entry {info.filename!r} does not match its declared size.")
             total += len(content)
-            if total > limits.max_zip_uncompressed_bytes:
+            if total > self.limits.max_zip_uncompressed_bytes:
                 raise UnsafeArchiveError("ZIP content exceeds the decompressed size limit.")
             if content.startswith(_NESTED_ARCHIVE_MAGIC):
-                skipped.append(SkippedEntry(info.filename, "nested archives are not accepted"))
+                yield SkippedEntry(info.filename, "nested archives are not accepted")
                 continue
-            label, problem = label_from_path(path) if infer_labels else (None, None)
-            entries.append(ArchiveEntry(info.filename, content, label, problem))
+            label, problem = label_from_path(path) if self.infer_labels else (None, None)
+            yield ArchiveEntry(info.filename, content, label, problem)
+
+
+def read_zip(data: bytes, limits: UploadLimits, *, infer_labels: bool = True,
+             max_files: int | None = None) -> tuple[list[ArchiveEntry], list[SkippedEntry]]:
+    """Collect validated entries for synchronous callers; jobs use ZipReader directly."""
+    entries, skipped = [], []
+    with ZipReader(io.BytesIO(data), limits, infer_labels=infer_labels, max_files=max_files) as reader:
+        for entry in reader:
+            (skipped if isinstance(entry, SkippedEntry) else entries).append(entry)
     return entries, skipped

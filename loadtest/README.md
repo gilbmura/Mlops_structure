@@ -1,8 +1,12 @@
 # Load testing
 
-`locustfile.py` uploads real JPEG slices from the held-out test split to `POST /predict`
-through the nginx load balancer; `run_scaling.py` repeats the same workload with 1, 2 and 3
-API containers and writes everything under `results/`:
+`locustfile.py` currently uploads real JPEG slices from the held-out test split to
+`POST /api/predict` on the Azure deployment. Use a bare HTTPS origin for `--host`;
+see [the setup guide](../docs/SETUP.md#7-deploy-and-test-in-your-own-cloud-account).
+
+The measurements below came from the earlier local workload. `run_scaling.py`
+targets the local gateway's `/predict` route and needs that route aligned with the
+current workload before it can be reused. Its historical output layout is:
 
 ```
 results/<N>_replicas/locust_stats.csv, locust_stats_history.csv, locust_failures.csv   raw Locust output (measured run)
@@ -43,4 +47,5 @@ slightly different moments after ramp-up.
   clearer gain at this step is latency (median 58 ms, p99 540 ms).
 * These numbers describe one laptop, where containers, Locust and the OS share 8 logical CPUs. More
   replicas than free cores would not help, and cloud results will differ (network latency, different vCPUs).
-  The Azure measurement is still **pending**.
+  The final Azure reports and comparison still need adding to
+  [results/azure_final/](results/azure_final/README.md).

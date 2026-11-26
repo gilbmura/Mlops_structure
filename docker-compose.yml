@@ -24,6 +24,7 @@ services:
       ADMIN_API_KEY: ${ADMIN_API_KEY:?Set ADMIN_API_KEY in .env (see .env.example)}
       TF_NUM_THREADS: ${API_TF_THREADS:-1}
     volumes:
+      - ./config/pipeline.yaml:/app/config/pipeline.yaml:ro  # restart services after config changes
       - ./data:/app/data:ro          # prepared dataset + similarity index (read-only)
       - ./models:/app/models         # registry; written by admin activation/rollback
       - ./reports:/app/reports:ro    # evaluation artifacts shown in the UI
@@ -57,6 +58,7 @@ services:
       <<: *app-env
       TF_NUM_THREADS: ${WORKER_TF_THREADS:-0}
     volumes:
+      - ./config/pipeline.yaml:/app/config/pipeline.yaml:ro
       - ./data:/app/data             # writes preprocessing caches
       - ./models:/app/models         # registers and promotes candidates
       - state:/app/state

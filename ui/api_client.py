@@ -27,6 +27,8 @@ class ApiClient:
         headers = {"X-Admin-Key": self.admin_key} if admin and self.admin_key else {}
         try:
             response = requests.request(method, f"{self.base_url}{path}", headers=headers, timeout=timeout or self.timeout, **kwargs)
+        except requests.Timeout as exc:
+            raise ApiError("The API response timed out. Check upload job status before retrying; a received ZIP may already be queued.") from exc
         except requests.RequestException as exc:
             raise ApiError(f"Cannot reach the API at {self.base_url}: {exc}") from exc
         if response.status_code >= 400:
@@ -86,8 +88,15 @@ class ApiClient:
     def upload_zip(self, name: str, data: bytes) -> dict:
         return self._json("POST", "/uploads/zip", admin=True, timeout=300, files={"file": (name, data, "application/zip")})
 
-    def uploads(self, status: str | None = None, batch_id: str | None = None) -> dict:
-        params = {key: value for key, value in {"status_filter": status, "batch_id": batch_id}.items() if value is not None}
+    def upload_jobs(self) -> list[dict]:
+        return self._json("GET", "/uploads/jobs", admin=True)
+
+    def upload_job(self, job_id: str) -> dict:
+        return self._json("GET", f"/uploads/jobs/{job_id}", admin=True)
+
+    def uploads(self, status: str | None = None, batch_id: str | None = None, limit: int = 500, offset: int = 0) -> dict:
+        params = {key: value for key, value in {"status_filter": status, "batch_id": batch_id,
+                                               "limit": limit, "offset": offset}.items() if value is not None}
         return self._json("GET", "/uploads", admin=True, params=params)
 
     def upload_image(self, upload_id: str) -> bytes:

@@ -24,7 +24,6 @@ st.set_page_config(page_title="Brain MRI classifier (educational)", page_icon="ð
 with st.sidebar:
     st.caption("Educational prototype â€” not for diagnosis.")
     api_url = os.environ.get("API_URL", "http://127.0.0.1:8000").rstrip("/")
-    st.caption(f"API: `{api_url}`")
     admin_key = st.text_input("Admin key (uploads & retraining)", type="password")
     st.divider()
     reduce_motion = st.toggle("Reduce motion", key="reduce_motion", help="Disable UI animations. Your device's reduced-motion setting is also respected.")

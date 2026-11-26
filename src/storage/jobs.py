@@ -10,7 +10,7 @@ from pathlib import Path
 from src.storage.database import Database, utc_now
 
 QUEUED, RUNNING, SUCCEEDED, FAILED = "queued", "running", "succeeded", "failed"
-TRAIN, RETRAIN = "train", "retrain"
+TRAIN, RETRAIN, UPLOAD = "train", "retrain", "upload"
 
 
 class JobConflictError(RuntimeError):
@@ -31,9 +31,9 @@ class JobStore:
         self.db = database
         self.logs_dir = Path(logs_dir)
 
-    def create(self, kind: str, params: dict | None = None) -> dict:
+    def create(self, kind: str, params: dict | None = None, *, job_id: str | None = None) -> dict:
         """Queue a job; training and retraining share a single active slot."""
-        job_id = uuid.uuid4().hex[:12]
+        job_id = job_id or uuid.uuid4().hex[:12]
         log_path = self.logs_dir / f"{job_id}.log"
         try:
             with self.db.transaction() as conn:
@@ -53,9 +53,11 @@ class JobStore:
         with self.db.transaction() as conn:
             return _row(conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone())
 
-    def list(self, limit: int = 20) -> list[dict]:
+    def list(self, limit: int = 20, kinds: tuple[str, ...] | None = None) -> list[dict]:
+        where = f"WHERE kind IN ({','.join('?' for _ in kinds)})" if kinds else ""
         with self.db.transaction() as conn:
-            rows = conn.execute("SELECT * FROM jobs ORDER BY created_at DESC, rowid DESC LIMIT ?", (limit,)).fetchall()
+            rows = conn.execute(f"SELECT * FROM jobs {where} ORDER BY created_at DESC, rowid DESC LIMIT ?",
+                                (*kinds, limit) if kinds else (limit,)).fetchall()
         return [_row(r) for r in rows]
 
     def active(self, kind: str) -> dict | None:
@@ -77,9 +79,15 @@ class JobStore:
             raise ValueError(f"Final status must be {SUCCEEDED} or {FAILED}, not {status!r}.")
         with self.db.transaction() as conn:
             conn.execute(
-                "UPDATE jobs SET status = ?, finished_at = ?, result = ?, error = ? WHERE id = ?",
+                "UPDATE jobs SET status = ?, finished_at = ?, result = COALESCE(?, result), error = ? WHERE id = ?",
                 (status, utc_now(), json.dumps(result) if result is not None else None, error, job_id),
             )
+
+    def progress(self, job_id: str, result: dict) -> None:
+        """Persist a small checkpoint so progress survives browser refreshes."""
+        with self.db.transaction() as conn:
+            conn.execute("UPDATE jobs SET result = ? WHERE id = ? AND status = ?",
+                         (json.dumps(result), job_id, RUNNING))
 
     def fail_orphaned(self, reason: str) -> int:
         """Mark jobs left 'running' by a crashed or restarted worker as failed."""

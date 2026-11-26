@@ -70,7 +70,8 @@ and no cloud load-test/evaluation evidence was found in this checkout.
    before recording uploads. Local admission of the 100 reserved images does not prove they
    were admitted on Azure. Preserve upload history and duplicate/leakage protection.
 4. Use small correctly labelled batches. Limits remain 320 MiB ZIP, 640 MiB expanded,
-   16,000 archive entries, 200 files per batch and 10 MiB per image.
+   16,000 archive entries, 16,000 files per batch and 10 MiB per image. ZIP uploads return
+   a background job; wait for screening success before reviewing/admitting the batch.
 5. Keep a completed full retraining result for the validation/promotion explanation. Quick demo
    runs use a subset and never promote. Use the notebook to explain at least three image features.
 6. Publish all local source/test/artifact changes, confirm registry artifacts are included, rebuild
@@ -79,6 +80,28 @@ and no cloud load-test/evaluation evidence was found in this checkout.
 7. Demonstrate both **Train a new model from scratch** and upload-triggered **retraining** in
    the UI. Full initial-training candidates require manual activation after validation review;
    quick initial-training candidates cannot be activated.
+
+## Background ZIP upload verification — 2026-11-25
+
+Local implementation and Docker refresh completed. The full test suite passed: **142 tests**,
+including interrupted/corrupt uploads, protected progress endpoints, streaming archive reads,
+16,000-file processing, paged results, admission guards, and training/retraining regressions.
+
+An isolated local API/worker run received the actual 250 MiB BRISC archive with HTTP 202 in
+3.778 seconds and screened all 15,591 files in 210.858 seconds overall. All 102 health checks
+during screening passed. Results: 8,017 rejected, 7,467 duplicate, 107 needing labels; no images
+were admitted and no training was triggered. The received source ZIP was removed after completion.
+These are local measurements, not Azure performance results. See the
+[raw verification report](../reports/qa/background_zip_20261125.json).
+
+The rebuilt Docker API and worker also completed a deliberately invalid one-image ZIP through
+the gateway (`queued → running → succeeded`, one rejected file). Retraining for that batch
+returned HTTP 400 and the existing admitted pool was unchanged. The complete Streamlit page
+rendered against the live API without errors; review was available after screening and the
+rejected batch's retraining button stayed disabled.
+
+Azure still needs the updated code and API/worker/UI images. Deploy those services together;
+an older worker does not support the new `upload` job kind.
 
 ## Limits of this audit
 

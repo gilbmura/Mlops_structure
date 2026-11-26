@@ -1,11 +1,28 @@
 # Environments, secrets and local tool settings
 .venv/
 .env
+.env.*
+!.env.example
 .claude/
+.streamlit/secrets.toml
+/.azure/
+/.aws/
+/.ssh/
+*.pem
+*.key
+*.pfx
+*.p12
 __pycache__/
 *.pyc
 .pytest_cache/
+.ruff_cache/
 .ipynb_checkpoints/
+work/
+dist/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
 
 # Data: the train and test images (~121 MB, BRISC 2025, CC BY 4.0) and the manifests are
 # included. Validation / retrain-demo images, caches and runtime state are regenerated
@@ -16,7 +33,7 @@ data/*
 !data/train/
 !data/test/
 
-# Model registry: delivered versions v001-v004 and the top-level copy of the served model
+# Model registry: delivered versions v001-v005 and the top-level copy of the served model
 # are included (see models/README.md); later candidates stay local.
 models/*
 !models/README.md
@@ -28,9 +45,12 @@ models/versions/*
 !models/versions/v002/
 !models/versions/v003/
 !models/versions/v004/
+!models/versions/v005/
 
 # Locally generated deployment bundle; rebuild it after code changes.
 deploy-package*.tar.gz
+/*.tar.gz
+/*.zip
 
 # Load-test scratch output (curated raw results live in loadtest/results/)
 loadtest/tmp/

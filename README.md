@@ -12,6 +12,9 @@ no externally pretrained parts, no hosted prediction services), predicts `glioma
 * `no_tumor` → **"No tumor detected in this image."**
 * any other class → **"Tumor detected — predicted type: [class]."**
 
+**New installation:** follow [docs/SETUP.md](docs/SETUP.md) to create your own environment
+and admin key, prepare the data, run the app or train a new model from scratch.
+
 ### Results at a glance (actual, from `reports/models/`)
 
 | Model | Parameters | Validation macro-F1 | **Final test accuracy** | **Final test macro-F1** | Test tumour sensitivity / specificity |
@@ -45,9 +48,9 @@ notebook §8 and [Limitations](#limitations).
 | Tests | `tests/` (125 passed during QA on 2026-11-24; `reports/qa_tests.xml`) |
 
 **Repository:** https://github.com/gilbmura/Mlops_structure (configured Git remote; publish the latest local changes).
-**Azure URL:** https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com (original deployment;
-current public checks timed out on 2026-11-24, and local updates still need deployment).
-**Still needed:** the YouTube demo-video link and cloud evaluation/load-test evidence
+**Azure URL:** https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com (deployed;
+availability depends on the VM's running schedule).
+**Still needed for submission:** the YouTube demo-video link and the final cloud evaluation/load-test evidence
 (see [Status of deliverables](#status-of-deliverables)).
 
 ---
@@ -58,7 +61,7 @@ current public checks timed out on 2026-11-24, and local updates still need depl
 4. [Data preparation](#data-preparation) · 5. [Training and evaluation](#training-and-evaluation)
 6. [Running locally](#running-locally-without-docker) · 7. [Docker](#docker-and-load-balancing)
 8. [Uploads and retraining](#uploads-review-and-retraining) · 9. [Load testing](#load-testing)
-10. [Tests](#tests) · 11. [Azure](#azure-deployment-pending) · 12. [Dataset licence](#dataset-licence-and-attribution)
+10. [Tests](#tests) · 11. [Azure](#azure-deployment) · 12. [Dataset licence](#dataset-licence-and-attribution)
 13. [Limitations](#limitations) · 14. [Submission](#submission-packaging) · 15. [Status of deliverables](#status-of-deliverables)
 
 ## Architecture
@@ -101,7 +104,7 @@ scripts/             prepare_dataset.py · train_model.py · evaluate_model.py �
 tests/               pytest suite
 loadtest/            locustfile.py · run_scaling.py · README.md (conditions + interpretation) · results/ (raw CSVs + summary)
 deploy/docker/       Dockerfile.api · Dockerfile.ui · nginx.conf      (docker-compose.yml at the root)
-deploy/azure/        plan, dry-run provisioning script, HTTPS override — not executed
+deploy/azure/        deployment guide, dry-run provisioning script, HTTPS override
 data/  models/  reports/    see data/README.md and models/README.md
 docs/demo_video_plan.md
 ```
@@ -280,7 +283,7 @@ or a rejection reason with no class/score. Download the complete list with **Dow
 All images in a batch use the same model version and the same preprocessing/input checks as single prediction.
 These uploads never enter staging, the upload database, or the training pool.
 
-API: `POST /predict/zip`, multipart field `file`. Defaults: 200 files, 320 MiB compressed,
+API: `POST /predict/zip`, multipart field `file`. Defaults: 16,000 files/ZIP entries, 320 MiB compressed,
 640 MiB expanded, 10 MiB per image (configured under `uploads`). Unsafe/corrupt/empty archives
 return 400; oversized requests return 413; no model returns 503. A safe archive returns 200
 with per-file results, including rejected files. Nested archives, invalid images and images refused
@@ -297,6 +300,14 @@ UI page **Uploads & retraining** (enter the admin key in the sidebar), or the AP
    ```
    Class folder names are matched case-insensitively (`No Tumor`, `no-tumor` → `no_tumor`).
    Files outside a class folder or in an unknown folder become **needs label** — never a new class.
+   **ZIP uploads run in the background:** `POST /uploads/zip` saves the archive and returns
+   HTTP 202 with a job ID. The existing worker screens files one at a time. The UI polls
+   admin-only `GET /uploads/jobs/{id}` every three seconds, showing processed/total counts,
+   outcomes and failures. `GET /uploads/jobs` restores recent jobs after a browser refresh.
+   After success, select **Review this batch**. Review/rejection lists are paged (25 files per page).
+   Uploading the same ZIP again while its job is active returns that job; a different ZIP
+   receives 409 until the current upload finishes. Training and ZIP jobs share one worker,
+   so an upload may wait behind training. No training is started automatically.
 2. **Screening** (every file): content decode, size/dimension limits; ZIP safety (path traversal,
    absolute/drive paths, symlinks, entry count, declared and actual decompressed size, compression
    ratio > 100 → whole archive refused; nested archives, encrypted entries and OS metadata skipped);
@@ -313,10 +324,23 @@ UI page **Uploads & retraining** (enter the admin key in the sidebar), or the AP
    previews, labels, notes and reasons in the UI. A reviewer corrects labels and **admits** them after
    confirming the labels were checked by a trustworthy person. Model predictions are never used as labels.
    The UI shows rejection reasons separately without label controls.
-   Upload limits are 320 MiB compressed/per batch, 640 MiB expanded, 200 images and 10 MiB
+   Upload limits are 320 MiB compressed/per batch, 640 MiB expanded, 16,000 files and 10 MiB
    per image, with up to 16,000 ZIP entries (files and directories). Streamlit uses 320 MiB locally and in Compose; nginx allows 330 MiB for multipart
-   overhead. The complete BRISC archive exceeds the image-count limit: use small labelled batches
-   of new images, or the reserved retrain-demo split.
+   overhead. The complete BRISC archive fits these count/size limits, but includes segmentation
+   images/masks and existing train/test data, with deeper folders than the upload label format.
+   Use class-folder ZIPs of new images or the reserved retrain-demo split for retraining.
+   ZIP screening continues after the upload response and after closing the browser. The
+   request timeout still applies to transferring/receiving the archive, not to screening it.
+   Single/multiple image uploads and ZIP predictions remain synchronous.
+   Passing archive limits does not bypass content,
+   duplicate, label or evaluation-leakage checks.
+   While a ZIP is processing, its partial images cannot be relabelled, admitted or used for
+   retraining. A corrupt archive or worker interruption fails the job and invalidates its
+   partial staged images; checkpoint counts remain visible for troubleshooting. Re-upload
+   after fixing the problem. Completed/failed jobs remove their saved source ZIP.
+   Docker Compose mounts `config/pipeline.yaml` read-only into the API and worker.
+   Restart both services after changing this file so their cached configuration is reloaded;
+   configuration-only changes do not require rebuilding the images.
 4. **Retrain** — **Retrain with this batch** is disabled until the current batch has admitted images.
    Selecting another file or an upload failure clears that batch selection. Rejected batches cannot
    use previously admitted images to enable this button. **Retrain with existing pool** is a separate
@@ -386,10 +410,20 @@ before demonstrating the updated UI and worker in Docker.
 
 ## Load testing
 
+The current workload uses Azure's `/api/predict` route. To open Locust's UI against
+your own deployed installation, use its bare HTTPS origin:
+
 ```powershell
-docker compose up -d --build
-python loadtest/run_scaling.py --replicas 1 2 3 --users 60 --spawn-rate 10 --duration 120 --warmup 30
+python -m locust -f loadtest/locustfile.py --host https://YOUR-SITE-HOST
 ```
+
+Open `http://localhost:8089`. Keep the users, spawn rate, duration and model fixed
+while comparing API replica counts. Add the final cloud reports under
+[loadtest/results/azure_final/](loadtest/results/azure_final/README.md).
+
+The older local helper, `run_scaling.py`, targets `/predict` through the local gateway.
+Its route must be aligned with the current workload before rerunning it locally.
+The recorded measurements below belong to the earlier local test, not to Azure.
 
 Actual local results (2026-11-21; raw CSVs, per-container counts and CPU samples in
 [loadtest/results/](loadtest/results/), conditions and interpretation in [loadtest/README.md](loadtest/README.md)).
@@ -427,18 +461,20 @@ in `reports/test_results.txt`. What is covered:
 | `test_api.py` | **prediction with the genuinely trained model on a spread sample of held-out slices (≥ 90 % accepted, full contract checked)**; colour and greyscale portrait photos and a flat colour image refused with no diagnosis; health/replica header; 503 without model; admin key required/disabled; upload → review → admit → retrain trigger (202, then 409); unsafe ZIP via API |
 | `test_retraining.py` | end-to-end: one admitted image → worker job → saved custom weights continued on train + upload → validation comparison → promotion decision; a missing upload fails the job without registering or promoting anything |
 
-## Azure deployment (pending)
+## Azure deployment
 
-Prepared but **not executed** — no resources created, no credit spent. See
-[deploy/azure/README.md](deploy/azure/README.md): single Ubuntu VM running this Compose stack, Caddy
-HTTPS, admin key + optional basic auth, SSH restricted to one IP, daily auto-shutdown, budget alerts,
-deallocate/delete instructions, and the cloud load-test procedure.
+The application has been deployed on a single Ubuntu VM with this Compose stack,
+Caddy HTTPS and an SSH rule restricted to the owner's client IP. See
+[deploy/azure/README.md](deploy/azure/README.md) for setup in your own account and
+[docs/SETUP.md](docs/SETUP.md) for fresh credentials and local preparation.
+Live availability depends on the VM schedule; deployment alone does not substitute
+for attaching the final cloud evaluation and load-test reports.
 
 | Item | Status |
 |---|---|
-| Azure public URL | **PENDING** |
-| Cloud evaluation / health evidence | **PENDING** |
-| Cloud load test (1/2/3 replicas) | **PENDING** |
+| Azure public URL | Deployed — URL above |
+| Cloud evaluation / health evidence | Add the final recorded evidence before submission |
+| Cloud load test (1/2/3 replicas) | Add final reports to `loadtest/results/azure_final/` and document the comparison |
 | YouTube demo video | **PENDING** — plan in [docs/demo_video_plan.md](docs/demo_video_plan.md) |
 
 ## Dataset licence and attribution
@@ -486,19 +522,26 @@ deallocate/delete instructions, and the cloud load-test procedure.
 
 ## Submission packaging
 
-* **First attempt — ZIP of the repository.** Do **not** zip the folder by right-clicking it: that would
-  include `.venv/` (several GB) and `.env` (your secret admin key). From the repository root, run this
-  instead; it packs exactly the files `.gitignore` allows and works without any commits:
+* **First attempt — ZIP of a reviewed repository snapshot.** Review `git status --short` and
+  `git diff --stat`, stage the intended source, documentation, data, model artifacts and results,
+  review `git diff --cached --stat`, then commit that submission version. Include new modules and
+  every model directory referenced by `models/registry.json`. Only after that commit, run:
 
   ```powershell
-  python -c "import subprocess, zipfile; files = subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard'], capture_output=True, text=True, check=True).stdout.splitlines(); archive = zipfile.ZipFile('../brain_mri_classifier.zip', 'w', zipfile.ZIP_DEFLATED); [archive.write(f, 'brain_mri_classifier/' + f) for f in files]; archive.close()"
+  git archive --format=zip --prefix=brain_mri_classifier/ --output=../brain_mri_classifier.zip HEAD
   ```
 
-  The ZIP (one level above the repository) contains the code, notebook, `data/train` and `data/test`
-  images, manifests, `models/brain_mri_classifier.h5` and `models/versions/`, reports, load-test results
-  and Docker files; it excludes `.venv`, `.env`, caches and runtime state. Open it and check before submitting.
-* **Second attempt — GitHub URL:** push this repository (licence section above) and submit the URL.
-  Not done yet — publishing requires your decision.
+  This exports committed files without `.git/` history. It does **not** include uncommitted edits
+  or new untracked files. It still includes unwanted files if they were already committed;
+  `.gitignore` does not remove tracked files. Inspect the ZIP before submitting. Never include a
+  real `.env`, virtual environment, browser profile, runtime database or deployment backup archive.
+  Preserve the executed notebook, trained model, source modules and evaluation evidence.
+  The recipient follows [docs/SETUP.md](docs/SETUP.md) to recreate their environment, admin key
+  configuration and the generated data/index files omitted from Git.
+* **Second attempt — GitHub URL:** publish the reviewed snapshot and submit the actual URL.
+  Pushing this existing repository includes its reachable history. For a fresh public history,
+  extract the reviewed ZIP into a separate folder, initialize a new repository there and push to
+  a new empty GitHub repository. Keep the working repository and its backup intact.
 
 ## Status of deliverables
 
@@ -513,6 +556,6 @@ deallocate/delete instructions, and the cloud load-test procedure.
 | Upload → review → admit → background retraining → promotion / rollback | Done — full run on Docker; candidate v003 correctly not promoted; rollback demonstrated |
 | Tests | Done — 125 passed (2026-11-24), `reports/qa_tests.xml` |
 | Docker Compose with nginx load balancing; Locust 1/2/3 containers | Done — results above |
-| Azure deployment, public URL, cloud load test | Original stack deployed; latest update, current health and cloud evidence **PENDING** (see `deploy/azure/`) |
+| Azure deployment, public URL, cloud load test | Deployed; final cloud evidence and 1/2/3-replica comparison still need attaching |
 | Demo video (YouTube) | **PENDING** (plan in `docs/demo_video_plan.md`) |
 | GitHub repository URL | https://github.com/gilbmura/Mlops_structure — latest local changes still need publishing |

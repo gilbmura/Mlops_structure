@@ -62,7 +62,7 @@ promotion:
 
 uploads:
   max_file_bytes: 10485760           # 10 MiB per image
-  max_files_per_batch: 200
+  max_files_per_batch: 16000         # file-count cap; ZIP entries also count directories
   max_batch_bytes: 335544320         # 320 MiB per request (images or ZIP)
   max_zip_entries: 16000            # includes files and directories
   max_zip_uncompressed_bytes: 671088640   # 640 MiB in total once decompressed

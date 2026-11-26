@@ -49,23 +49,48 @@ def check_predictions(api: str, data_dir: Path, failures: list[str]) -> list[dic
     return rows
 
 
+def wait_for_upload(api: str, headers: dict, job: dict, timeout: float, failures: list[str]) -> dict:
+    deadline = time.monotonic() + timeout
+    while job["status"] in ("queued", "running") and time.monotonic() < deadline:
+        response = requests.get(f"{api}/uploads/jobs/{job['id']}", headers=headers, timeout=30)
+        response.raise_for_status()
+        job = response.json()
+        if job["status"] in ("queued", "running"):
+            time.sleep(3)
+    batch = {"batch_id": job["id"], "counts": (job.get("result") or {}).get("counts"), "items": []}
+    _check(job["status"] == "succeeded", f"ZIP job ended as {job['status']}: {job.get('error')}", failures)
+    if job["status"] != "succeeded":
+        return batch
+    while True:
+        response = requests.get(f"{api}/uploads", headers=headers, timeout=30,
+                                params={"batch_id": job["id"], "status_filter": "staged", "limit": 100,
+                                        "offset": len(batch["items"])})
+        response.raise_for_status()
+        page = response.json()
+        batch["items"].extend(page["items"])
+        if not page["items"] or len(batch["items"]) >= page["total"]:
+            return batch
+
+
 def run_upload_and_retrain(api: str, key: str, archive: Path, mode: str, failures: list[str], timeout: float) -> dict:
     headers = {"X-Admin-Key": key}
     report = requests.post(f"{api}/uploads/zip", headers=headers, timeout=300,
                            files={"file": (archive.name, archive.read_bytes(), "application/zip")})
-    _check(report.status_code == 200, f"ZIP upload returned {report.status_code}: {report.text[:200]}", failures)
+    _check(report.status_code in (200, 202), f"ZIP upload returned {report.status_code}: {report.text[:200]}", failures)
     batch = report.json()
-    if report.status_code != 200:
+    if report.status_code not in (200, 202):
         return {"upload_status": report.status_code}
+    if report.status_code == 202:
+        batch = wait_for_upload(api, headers, batch, timeout, failures)
     staged = [item["id"] for item in batch.get("items", []) if item["status"] == "staged"]
     result = {"batch_id": batch.get("batch_id"), "upload_counts": batch.get("counts")}
-    if staged:
+    for offset in range(0, len(staged), 100):
         admitted = requests.post(f"{api}/uploads/admit", headers=headers, timeout=300,
-                                 json={"upload_ids": staged, "confirm_labels_reviewed": True})
+                                 json={"upload_ids": staged[offset:offset + 100], "confirm_labels_reviewed": True})
         _check(admitted.status_code == 200, f"Admission returned {admitted.status_code}", failures)
         if admitted.status_code != 200:
             return result
-        result["admitted"] = len(admitted.json()["admitted"])
+        result["admitted"] = result.get("admitted", 0) + len(admitted.json()["admitted"])
     if mode == "none":
         return result
     if not result.get("admitted"):
@@ -97,7 +122,7 @@ def main() -> None:
     parser.add_argument("--api", default=os.environ.get("API_URL", "http://127.0.0.1:8000"))
     parser.add_argument("--upload-zip", type=Path)
     parser.add_argument("--retrain", choices=["none", "smoke", "full"], default="none")
-    parser.add_argument("--timeout", type=float, default=7200, help="seconds to wait for the retraining job")
+    parser.add_argument("--timeout", type=float, default=7200, help="seconds to wait for each upload/retraining job")
     args = parser.parse_args()
     settings = get_settings()
     api, failures = args.api.rstrip("/"), []

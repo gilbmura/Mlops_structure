@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+POST,POST /predict,CatchResponseError('HTTP 405: Method Not Allowed'),71,2026-11-24T17:18:59Z,2026-11-24T17:19:26Z

@@ -29,7 +29,8 @@ def result_rows(report: dict) -> list[dict]:
 def render(client: ApiClient) -> None:
     st.caption("Upload a ZIP of JPEG/PNG images, at its root or in folders. Class labels and an admin key are not required. "
                "These files are used only for prediction; they do not enter the retraining pool.")
-    st.caption("Default limits: 200 files, 320 MiB ZIP, 640 MiB expanded, 10 MiB per image. Nested archives are rejected.")
+    st.caption("Default limits: 16,000 files, 16,000 ZIP entries including folders, 320 MiB ZIP, "
+               "640 MiB expanded, 10 MiB per image. Nested archives are rejected.")
     archive = st.file_uploader("ZIP for batch predictions", type=["zip"], key="prediction_zip")
     if archive is None:
         st.session_state.pop("zip_prediction_result", None)

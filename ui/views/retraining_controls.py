@@ -26,9 +26,9 @@ def render_controls(client: ApiClient) -> None:
                "The candidate must pass the validation promotion checks before replacing the active model.")
     smoke = st.checkbox("Quick demo run (2 epochs on a small subset — never promoted)")
     batch_id = st.session_state.get("current_upload_batch")
-    admitted = client.uploads("admitted", batch_id=batch_id)["items"] if batch_id else []
+    admitted = client.uploads("admitted", batch_id=batch_id, limit=1)["total"] if batch_id else 0
     if batch_id:
-        st.write(f"Current batch: {batch_id} — {len(admitted)} admitted image(s).")
+        st.write(f"Current batch: {batch_id} — {admitted:,} admitted image(s).")
     if not admitted:
         st.info("Retraining with this batch is disabled. Stage valid images, review their labels and admit them first. "
                 "Rejected images cannot enable this action.")
@@ -38,7 +38,7 @@ def render_controls(client: ApiClient) -> None:
         _queue(client, smoke, batch_id)
 
     with st.expander("Retrain with the existing pool (separate action)"):
-        count = client.uploads()["counts"].get("admitted", 0)
+        count = client.uploads(limit=1)["counts"].get("admitted", 0)
         st.write(f"Existing pool: {count} admitted image(s), across all batches.")
         st.caption("This action is independent of the latest upload, including when that upload was rejected.")
         if st.button("Retrain with existing pool", disabled=count == 0):

@@ -32,7 +32,7 @@ class PredictUser(HttpUser):
     @task
     def predict(self) -> None:
         name, data = random.choice(IMAGES)
-        with self.client.post("/predict", files={"file": (name, data, "image/jpeg")}, name="POST /predict", catch_response=True) as response:
+        with self.client.post("/api/predict", files={"file": (name, data, "image/jpeg")}, name="POST /api/predict", catch_response=True) as response:
             if response.status_code != 200:
                 response.failure(f"HTTP {response.status_code}: {response.text[:120]}")
                 return

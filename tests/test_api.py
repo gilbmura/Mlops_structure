@@ -25,7 +25,7 @@ ADMIN = {"X-Admin-Key": ADMIN_KEY}
 def real_client(real_settings, settings):
     """App serving the genuinely trained model from this checkout, with an isolated database."""
     require_artifacts(real_settings)
-    isolated = dataclasses.replace(real_settings, data_dir=settings.data_dir, admin_api_key=ADMIN_KEY)
+    isolated = dataclasses.replace(real_settings, data_dir=settings.data_dir, state_dir=settings.runtime_dir, admin_api_key=ADMIN_KEY)
     with TestClient(create_app(isolated)) as client:
         yield client
 

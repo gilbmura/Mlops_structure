@@ -21,14 +21,16 @@ are small (≤ 3.7 MB per artifact), so their folders and `registry.json` are in
 | `v002` | final CNN, initial training run | **active (served)** |
 | `v003` | retrained from scratch by a worker job on train + 100 admitted uploads | rejected by the promotion rule (meningioma recall −0.053); briefly activated manually to demonstrate hot swap, then rolled back |
 
-`v004` is also included because the current registry references this subsequent saved-weight
-retraining run (19 epochs, 4,120 training images). Its status is recorded in `registry.json`.
+`v004` and `v005` are also included because the current registry references these subsequent
+saved-weight retraining runs. Their status and validation scores are recorded in `registry.json`.
 When including future registry entries, include their artifact directories too; a registry must
 not reference missing model files in a fresh clone.
 
-Candidates created by later retraining runs stay local (git-ignored). To
-reproduce from scratch, delete this folder's contents except this README and run
-`python scripts/train_model.py --architecture baseline` then `python scripts/train_model.py --activate`.
+Candidates created by later retraining runs stay local (git-ignored). To train from scratch,
+prepare the dataset, then run `python scripts/train_model.py --architecture baseline` followed
+by `python scripts/train_model.py --architecture cnn --activate`. These commands start from
+random weights and register new versions; existing model files do not need to be deleted.
+See [the setup guide](../docs/SETUP.md) for environment and data preparation.
 
 **Safety.** Versions appear only after both artifacts were saved *and* reloaded with matching
 predictions. Promotion and rollback only switch the `active` pointer in `registry.json`;

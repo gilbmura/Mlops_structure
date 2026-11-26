@@ -88,7 +88,10 @@ quick checks cannot be activated.
   establish what is in the cloud database. Azure upload history has not yet been inspected.
 - Show that a rejected batch leaves **Retrain with this batch** disabled even when the separate
   **Retrain with existing pool** action is available. Accepted images require review and admission.
-- Use a small class-folder ZIP, not the complete BRISC archive (200 files per upload).
+- Use a small class-folder ZIP of reserved demo images. Although the file-count cap is
+  16,000, the complete BRISC archive includes segmentation masks and existing train/test data.
+- Show the ZIP job's queued/running progress, wait for success, then click **Review this batch**.
+  Refreshing the browser preserves the job. Review/admission stays blocked for incomplete jobs.
 - Keep a completed full training job available to explain validation and promotion. A quick
   demo job is a subset run and cannot promote, so do not present it as a full retraining result.
 - Show at least three feature interpretations from the notebook. Include the known classification

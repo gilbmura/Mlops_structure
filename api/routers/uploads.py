@@ -5,16 +5,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 
 from api.dependencies import AdminDep, ServicesDep, read_upload
 from api.schemas import AdmitRequest, LabelUpdate
 from api.services import Services
 from src.ingestion.archive import UnsafeArchiveError
+from src.ingestion.queue import queue_zip
 from src.ingestion.service import ContentScreeningUnavailable, IncomingFile, IngestionService, UploadRejectedError
 from src.labels import UnknownLabelError
 from src.storage.uploads import UploadStateError
+from src.storage.jobs import UPLOAD, JobConflictError
 
 router = APIRouter(prefix="/uploads", tags=["uploads"], dependencies=[AdminDep])
 
@@ -71,26 +73,39 @@ def upload_images(
     return {**report, "items": [_public(i) for i in report["items"]]}
 
 
-@router.post("/zip")
+@router.post("/zip", status_code=status.HTTP_202_ACCEPTED)
 def upload_zip(services: ServicesDep, file: UploadFile = File(..., description="ZIP of class folders")) -> dict:
-    """Stage every image in a ZIP of class folders (optionally inside one wrapper folder)."""
-    ingestion = _ingestion(services)
-    data = read_upload(file, services.limits.max_batch_bytes)
+    """Save a ZIP and queue screening. Poll /uploads/jobs/{id}; review after success."""
+    _ingestion(services)
     try:
-        report = ingestion.ingest_zip(data)
+        return queue_zip(file.file, file.filename or "upload.zip", services.settings.runtime_dir, services.limits, services.jobs)
     except UnsafeArchiveError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"ZIP rejected: {exc}") from exc
-    except ContentScreeningUnavailable as exc:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+    except JobConflictError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     except UploadRejectedError as exc:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc)) from exc
-    return {**report, "items": [_public(i) for i in report["items"]]}
+
+
+@router.get("/jobs")
+def upload_jobs(services: ServicesDep) -> list[dict]:
+    return services.jobs.list(20, kinds=(UPLOAD,))
+
+
+@router.get("/jobs/{job_id}")
+def upload_job(services: ServicesDep, job_id: str) -> dict:
+    job = services.jobs.get(job_id)
+    if not job or job["kind"] != UPLOAD:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Upload job not found.")
+    return job
 
 
 @router.get("")
-def list_uploads(services: ServicesDep, status_filter: str | None = None, batch_id: str | None = None, limit: int = 500) -> dict:
-    items = services.uploads.list(status_filter, batch_id, min(limit, 2000))
-    return {"counts": services.uploads.counts(), "items": [_public(i) for i in items]}
+def list_uploads(services: ServicesDep, status_filter: str | None = None, batch_id: str | None = None,
+                 limit: int = Query(500, ge=1, le=2000), offset: int = Query(0, ge=0)) -> dict:
+    items = services.uploads.list(status_filter, batch_id, limit, offset)
+    return {"counts": services.uploads.counts(), "total": services.uploads.count(status_filter, batch_id),
+            "items": [_public(i) for i in items]}
 
 
 @router.get("/{upload_id}/image")

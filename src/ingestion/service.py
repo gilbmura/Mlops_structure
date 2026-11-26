@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from src.dataset.fingerprint import fingerprint
-from src.ingestion.archive import read_zip
+from src.ingestion.archive import ArchiveEntry, SkippedEntry, read_zip
 from src.ingestion.limits import UploadLimits
 from src.ingestion.screening import DatasetIndex, judge
 from src.labels import UnknownLabelError, normalize_label
@@ -108,6 +108,11 @@ class IngestionService:
         logger.info("Upload batch %s: %s", batch_id, dict(counts))
         return {"batch_id": batch_id, "counts": dict(counts), "items": items}
 
+    def screen_archive_entry(self, batch_id: str, entry: ArchiveEntry | SkippedEntry, known: dict[str, str]) -> dict:
+        if isinstance(entry, SkippedEntry):
+            return self._record(batch_id, entry.path, REJECTED, reason=entry.reason)
+        return self._screen(batch_id, IncomingFile(entry.path, entry.data, entry.label, entry.label_problem), known)
+
     def _screen(self, batch_id: str, incoming: IncomingFile, known: dict[str, str]) -> dict:
         size = len(incoming.data)
         if size > self.limits.max_file_bytes:
@@ -153,7 +158,7 @@ class IngestionService:
         eligible = []
         for upload_id in dict.fromkeys(upload_ids):
             row = self.store.get(upload_id)
-            if not row or row["status"] != STAGED:
+            if not row or row["status"] != STAGED or not row.get("review_ready", True):
                 continue
             try:
                 data = Path(row["stored_path"]).read_bytes()
