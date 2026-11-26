@@ -73,6 +73,15 @@ Availability depends on the VM's running schedule.
 **API:** [Interactive documentation](https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com/api/docs)
 and [live health check](https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com/api/health).
 
+**Docker Hub (prebuilt images):**
+[API, worker and health probe](https://hub.docker.com/r/gilbmura/brain-mri-api) ·
+[Streamlit UI](https://hub.docker.com/r/gilbmura/brain-mri-ui).
+Use `gilbmura/brain-mri-api:1.0.0` and `gilbmura/brain-mri-ui:1.0.0`
+for Linux/AMD64. These images provide the application code and dependencies;
+the model, dataset, reports and your own admin key are supplied separately through
+the mounts and environment settings described in [the setup guide](docs/SETUP.md).
+
+
 **Demonstration evidence:** the project author confirms that the
 [video](https://youtu.be/7QIUv2JxGkg) demonstrates production model evaluation and
 the Azure performance comparison with 1, 2 and 3 API replicas. Downloadable
