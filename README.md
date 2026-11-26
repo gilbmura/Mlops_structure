@@ -5,6 +5,7 @@
 > clinical probability, and it can be confidently wrong  including on images that are not
 > brain MRI slices.
 
+**Disclaimer: My cloud server works from 8:00 Am to 11:00 PM Kigali time so that I can optimize cost**
 
 **For the admin key for retraining you can check the readme which is in the zipped folder**
 
