@@ -79,6 +79,7 @@ under `data/retrain_demo/<class>/`; keep final-test images out of retraining.
 
 To use the supplied model, retain `models/registry.json` and all model directories it
 references, then continue to step 5. The submitted active model is `v002`.
+Prediction uses that version's `model.h5`; `/health` reports the loaded artifact.
 
 To train your own model **from random initial weights**:
 

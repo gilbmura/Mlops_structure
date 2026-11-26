@@ -21,7 +21,7 @@ import tensorflow as tf
 from src.input_gate import GATE_FILE, FeatureDistance, GateRules, feature_model, rule_violations
 from src.labels import CLASS_NAMES, NO_TUMOR, tumor_status_message
 from src.preprocessing import PreprocessingSpec, preprocess_bytes
-from src.registry import ModelRegistry
+from src.registry import H5_FILE, ModelRegistry
 from utils.images import ImageLimits
 
 logger = logging.getLogger(__name__)
@@ -58,11 +58,15 @@ class Prediction:
 class Predictor:
     """One loaded model version together with its preprocessing contract and input gate."""
 
-    def __init__(self, model: keras.Model, metadata: dict, config: dict, gate: FeatureDistance | None, limits: ImageLimits = ImageLimits()) -> None:
+    def __init__(
+        self, model: keras.Model, metadata: dict, config: dict, gate: FeatureDistance | None,
+        limits: ImageLimits = ImageLimits(), *, artifact: str | None = None,
+    ) -> None:
         if list(metadata["class_names"]) != list(CLASS_NAMES):
             raise ModelUnavailableError(f"Model {metadata.get('version')} has class order {metadata['class_names']}, expected {list(CLASS_NAMES)}.")
         self.metadata = metadata
         self.version: str = metadata["version"]
+        self.artifact = artifact
         self.spec = PreprocessingSpec.from_dict(metadata["preprocessing"])
         self.serving = config["serving"]
         self.rules = GateRules.from_config(config)
@@ -85,7 +89,8 @@ class Predictor:
             raise ModelUnavailableError("No active model. Train one with: python scripts/train_model.py --activate")
         calibration = registry.read_attachment(version, GATE_FILE)
         gate = FeatureDistance.from_bytes(calibration) if calibration else None
-        return cls(registry.load_model(version), registry.metadata(version), config, gate, limits)
+        # Follow the active version's export, not the fixed top-level submission copy.
+        return cls(registry.load_model(version, H5_FILE), registry.metadata(version), config, gate, limits, artifact=H5_FILE)
 
     def predict_bytes(self, data: bytes) -> Prediction:
         """Decode, standardize, gate and classify one image (raises ``ImageDecodeError`` for invalid files)."""
@@ -167,7 +172,7 @@ class ActiveModelProvider:
                 if active and active != self.loaded_version:
                     self._predictor = Predictor.from_registry(self.registry, self.config, active, self.limits)
                     self.last_error = None
-                    logger.info("Serving model %s", active)
+                    logger.info("Serving model %s from %s", active, self._predictor.artifact)
                 elif not active:
                     self.last_error = "No active model is registered."
             except Exception as exc:  # keep serving the previous model on any load failure

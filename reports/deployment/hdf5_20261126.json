@@ -1,0 +1,94 @@
+{
+  "api": "https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com/api",
+  "health": {
+    "status": "ok",
+    "model_loaded": true,
+    "model_version": "v002",
+    "model_artifact": "model.h5",
+    "process_uptime_seconds": 65.4,
+    "process_started_at": "2026-11-26T13:39:40+00:00",
+    "served_by": "a9912766ea78",
+    "detail": null
+  },
+  "active_model": "v002",
+  "predictions": [
+    {
+      "file": "brisc2025_test_00007_gl_ax_t1.jpg",
+      "true": "glioma",
+      "predicted": "glioma",
+      "confidence": 0.9819,
+      "message": "Tumor detected \u2014 predicted type: glioma.",
+      "served_by": "a9912766ea78"
+    },
+    {
+      "file": "brisc2025_test_00263_me_ax_t1.jpg",
+      "true": "meningioma",
+      "predicted": "no_tumor",
+      "confidence": 0.9822,
+      "message": "No tumor detected in this image.",
+      "served_by": "a9912766ea78"
+    },
+    {
+      "file": "brisc2025_test_00563_no_ax_t1.jpg",
+      "true": "no_tumor",
+      "predicted": "no_tumor",
+      "confidence": 0.9971,
+      "message": "No tumor detected in this image.",
+      "served_by": "a9912766ea78"
+    },
+    {
+      "file": "brisc2025_test_00705_pi_ax_t1.jpg",
+      "true": "pituitary",
+      "predicted": "meningioma",
+      "confidence": 0.45,
+      "message": "Tumor detected \u2014 predicted type: meningioma.",
+      "served_by": "a9912766ea78"
+    }
+  ],
+  "failures": [],
+  "verified_at_utc": "2026-11-26T13:42:52+00:00",
+  "served_artifact": "models/versions/v002/model.h5",
+  "api_replicas": 1,
+  "local_tests": {
+    "passed": 58,
+    "failed": 0,
+    "skipped": 0
+  },
+  "format_comparison": [
+    {
+      "file": "brisc2025_test_00007_gl_ax_t1.jpg",
+      "previous_keras_class": "glioma",
+      "previous_keras_confidence": 0.9819,
+      "confidence_difference": 0.0,
+      "matches_previous_format": true
+    },
+    {
+      "file": "brisc2025_test_00263_me_ax_t1.jpg",
+      "previous_keras_class": "no_tumor",
+      "previous_keras_confidence": 0.9822,
+      "confidence_difference": 0.0,
+      "matches_previous_format": true
+    },
+    {
+      "file": "brisc2025_test_00563_no_ax_t1.jpg",
+      "previous_keras_class": "no_tumor",
+      "previous_keras_confidence": 0.9971,
+      "confidence_difference": 0.0,
+      "matches_previous_format": true
+    },
+    {
+      "file": "brisc2025_test_00705_pi_ax_t1.jpg",
+      "previous_keras_class": "meningioma",
+      "previous_keras_confidence": 0.45,
+      "confidence_difference": 0.0,
+      "matches_previous_format": true
+    }
+  ],
+  "known_labels_matched": 2,
+  "note": "Four samples verify serving compatibility, not general classification accuracy. Existing classification errors are preserved, not corrected by a format change.",
+  "deployed_source_sha256": {
+    "src/prediction.py": "b67c9e11ea23d1efc895bb3ebf85c03bf747b9d94ad816ed8f38fab91eaa137a",
+    "api/schemas.py": "e2551188384642015726ede6af97f5b18947b3bc487f9e0361cfd7bab9da19ee",
+    "api/routers/system.py": "e2187e8b473dd2db7de1be11d55305609f42e90c1608aff216bae990cca964e2"
+  }
+}

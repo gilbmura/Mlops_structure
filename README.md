@@ -5,6 +5,15 @@
 > clinical probability, and it can be confidently wrong — including on images that are not
 > brain MRI slices.
 
+**My mission** is to improve access to practical healthcare education in Africa by developing
+digital learning tools that help students explore medical imaging and understand the responsible
+use of artificial intelligence.
+
+**Learning problem addressed:** students need practical opportunities to understand how medical-image
+predictions are produced, evaluated and sometimes wrong. This project provides an interactive
+learning environment for examining MRI classification, confidence scores and model limitations.
+It demonstrates an ML workflow; educational impact has not been measured in a learner study.
+
 One four-class CNN, trained **from randomly initialised weights** (no transfer learning,
 no externally pretrained parts, no hosted prediction services), predicts `glioma`, `meningioma`,
 `pituitary` or `no_tumor`. The tumour status shown to users is derived from that output:
@@ -14,6 +23,10 @@ no externally pretrained parts, no hosted prediction services), predicts `glioma
 
 **New installation:** follow [docs/SETUP.md](docs/SETUP.md) to create your own environment
 and admin key, prepare the data, run the app or train a new model from scratch.
+
+Predictions load the active version's `models/versions/<version>/model.h5`. The health
+endpoint reports `model_artifact: "model.h5"` once that model is loaded. See
+[the HDF5 deployment update](deploy/azure/HDF5_UPDATE.md) for updating an existing Azure installation.
 
 ### Results at a glance (actual, from `reports/models/`)
 
@@ -45,13 +58,22 @@ notebook §8 and [Limitations](#limitations).
 | Evaluation results and figures | `reports/models/v002/` (metrics, confusion matrices, training curves, predictions) |
 | API · UI · Docker | `api/`, `ui/`, `docker-compose.yml`, `deploy/docker/` |
 | Load-test results | `loadtest/results/` and `loadtest/README.md` |
-| Tests | `tests/` (125 passed during QA on 2026-11-24; `reports/qa_tests.xml`) |
+| Tests | `tests/` — reproducible regression suite; see [Tests](#tests) |
 
-**Repository:** https://github.com/gilbmura/Mlops_structure (configured Git remote; publish the latest local changes).
-**Azure URL:** https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com (deployed;
-availability depends on the VM's running schedule).
-**Still needed for submission:** the YouTube demo-video link and the final cloud evaluation/load-test evidence
-(see [Status of deliverables](#status-of-deliverables)).
+**Video demo:** [Watch on YouTube](https://youtu.be/7QIUv2JxGkg).
+
+**Repository:** [GitHub source](https://github.com/gilbmura/Mlops_structure) (publish the latest local changes).
+
+**Deployed app:** [Open the Azure application](https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com).
+Availability depends on the VM's running schedule.
+
+**API:** [Interactive documentation](https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com/api/docs)
+and [live health check](https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com/api/health).
+
+**Demonstration evidence:** the project author confirms that the
+[video](https://youtu.be/7QIUv2JxGkg) demonstrates production model evaluation and
+the Azure performance comparison with 1, 2 and 3 API replicas. Downloadable
+stress-test and routing evidence is also included under `loadtest/results/azure_final/`.
 
 ---
 
@@ -63,6 +85,8 @@ availability depends on the VM's running schedule).
 8. [Uploads and retraining](#uploads-review-and-retraining) · 9. [Load testing](#load-testing)
 10. [Tests](#tests) · 11. [Azure](#azure-deployment) · 12. [Dataset licence](#dataset-licence-and-attribution)
 13. [Limitations](#limitations) · 14. [Submission](#submission-packaging) · 15. [Status of deliverables](#status-of-deliverables)
+
+Dataset exploration: [three feature interpretations](#dataset-insights).
 
 ## Architecture
 
@@ -106,7 +130,7 @@ loadtest/            locustfile.py · run_scaling.py · README.md (conditions + 
 deploy/docker/       Dockerfile.api · Dockerfile.ui · nginx.conf      (docker-compose.yml at the root)
 deploy/azure/        deployment guide, dry-run provisioning script, HTTPS override
 data/  models/  reports/    see data/README.md and models/README.md
-docs/demo_video_plan.md
+docs/SETUP.md        installation, environment, admin key and first-run instructions
 ```
 
 ## Setup
@@ -119,7 +143,12 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 Copy-Item .env.example .env      # then set ADMIN_API_KEY (instructions inside)
+python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
+
+For a fresh checkout, put the generated value after `ADMIN_API_KEY=` in your private `.env`.
+Use it in your own UI's admin field. Never commit that file or publish your key. When updating
+an existing installation, preserve its `.env` rather than copying over it.
 
 On Linux with an NVIDIA GPU, install `tensorflow[and-cuda]==2.20.0` instead of `tensorflow-cpu`;
 the code uses any visible GPU automatically. Native-Windows TensorFlow has no GPU support.
@@ -158,6 +187,30 @@ Thresholds were chosen after visually reviewing pairs in each band (notebook §2
 review rule, groups start mixing classes, so it is used for flagging only. **Patient separation cannot
 be guaranteed** — there are no patient identifiers. Re-running the script reproduces every manifest
 byte for byte (verified).
+
+## Dataset insights
+
+These measurements use the 4,020 training images after standardization to 128×128.
+Foreground measurements exclude pixels with intensity ≤ 20 so black padding does not
+dominate the statistics. Full analysis appears in notebook section 4 and the
+[feature summary](reports/dataset/feature_summary.json).
+
+![Training-split image-feature distributions](reports/dataset/feature_boxplots.png)
+
+* **Brightness:** median foreground intensity is about 68.0 for glioma and 88.5 for
+  no-tumour images. This dataset contains class-associated intensity differences that
+  the model could exploit; brightness alone does not establish a tumour diagnosis.
+* **Contrast:** median foreground standard deviation is about 27.7 for glioma and
+  34.4 for no-tumour images. The intensity variation differs between these groups,
+  but their distributions overlap, limiting this feature as a standalone classifier.
+* **Texture:** median foreground gradient magnitude is about 13.6 for glioma and
+  18.2 for no-tumour images. The latter group has stronger local intensity changes
+  in this collection; this is an image-statistics observation, not a clinical rule.
+
+Together, these features show that intensity and acquisition characteristics carry
+class information. The notebook also finds differences in source resolution and
+framing, so a CNN may learn collection-specific patterns alongside anatomy. These
+findings explain why testing on independent sources matters.
 
 ## Training and evaluation
 
@@ -258,9 +311,6 @@ The result is a candidate; the currently served model is preserved. Review the v
 results and use **Model activation & rollback** to activate a completed full-training candidate.
 The API refuses activation of smoke candidates. With no model yet, readiness is 503 but the UI
 and worker still start so you can create and activate the first model.
-
-Record on the hosted Azure app; see `docs/demo_video_plan.md` for the walkthrough and a
-read-only check of whether reserved images are already in that server's upload pool.
 
 ### UI presentation and live feedback
 
@@ -395,18 +445,19 @@ are never promoted. The earlier v003 results above describe the old from-scratch
 Uploaded image bytes live in persistent files; SQLite stores their paths, labels and review status.
 Demonstrate both the saved files and database records in the video. Keep your camera on and check audio.
 Show a correctly labelled prediction example, preprocessing, and the completed retraining job with its
-parent version. The rubric accepts a Dockerized UI; Azure remains pending under the broader project brief.
+parent version. Azure is deployed; the recorded health/prediction check and cloud
+evaluation/load-test evidence are described under [Azure deployment](#azure-deployment).
 
-Verified locally on 2026-11-22 using `python scripts/verify_retraining.py`: API upload and admission
+Recorded local check on 2026-11-24 using `python scripts/verify_retraining.py`: API upload and admission
 of one retrain-demo image, queued job, then a separate worker continuing v002 for one full-data epoch
-(4,021 training / 868 validation images). Validation macro-F1 was 0.8766 vs the parent's 0.9302, so the
-candidate was rejected. Training took 67.6 seconds. Both saved formats reloaded successfully; the
+(4,021 training / 868 validation images). Validation macro-F1 was 0.8885 vs the parent's 0.9302, so the
+candidate was rejected. Training took 64.8 seconds. Both saved formats reloaded successfully; the
 source parent checksum was unchanged. This short check verifies the workflow, not an accuracy improvement.
 Evidence: [saved_weights_check.json](reports/retraining_demo/saved_weights_check.json) and
 [saved_weights_worker.log](reports/retraining_demo/saved_weights_worker.log). The candidate named v003
 in this report belongs to an isolated cache registry, separate from the historical main-registry v003.
-Docker Desktop was stopped during this check; rebuild images with `docker compose up -d --build`
-before demonstrating the updated UI and worker in Docker.
+This is historical local evidence; current HDF5 serving verification is recorded in
+[reports/deployment/hdf5_20261126.json](reports/deployment/hdf5_20261126.json).
 
 ## Load testing
 
@@ -420,6 +471,26 @@ python -m locust -f loadtest/locustfile.py --host https://YOUR-SITE-HOST
 Open `http://localhost:8089`. Keep the users, spawn rate, duration and model fixed
 while comparing API replica counts. Add the final cloud reports under
 [loadtest/results/azure_final/](loadtest/results/azure_final/README.md).
+
+**Azure stress test attached (2026-11-26):**
+[Locust HTML report](loadtest/results/azure_final/1_replicas/20261126_083858_1000users/report.html)
+and [supporting logs screenshot](loadtest/results/azure_final/1_replicas/20261126_083858_1000users/locust-logs.png).
+The owner confirmed **1 API replica with 1,000 users**. The export records
+**902 requests, 471 failures (52.22%)**, **49.22 total requests/s** including
+failures (**23.52 successful requests/s**), a **16 s median**, **48 s p95** and
+**69 s p99**. This documents unreliable serving under that load, not a successful
+capacity target. See the [run notes](loadtest/results/azure_final/README.md) for
+the 18-second reporting-window limitation, ramp-up evidence and failure breakdown.
+It predates the HDF5 update. The Azure 1/2/3-replica performance comparison is
+demonstrated in the [video](https://youtu.be/7QIUv2JxGkg), as confirmed by the project author;
+separate HTML/CSV exports for that complete comparison are not attached here.
+
+**Azure routing evidence:** owner-provided checks of 20 sequential health requests
+show **20** responses from one container, **10/10** across two, and **7/7/6**
+across three (including a repeated three-container check). The
+[recorded counts and container IDs](loadtest/results/azure_final/README.md#routing-checks-across-1-2-and-3-api-replicas)
+demonstrate request distribution and supplement the performance comparison in
+the video. These health checks themselves do not measure prediction performance.
 
 The older local helper, `run_scaling.py`, targets `/predict` through the local gateway.
 Its route must be aligned with the current workload before rerunning it locally.
@@ -447,9 +518,10 @@ python -m pytest                      # full suite
 python -m pytest -m "not slow"        # skip the end-to-end retraining test
 ```
 
-Latest full run (2026-11-22): **96 passed, 0 failed** in 38.99 seconds (Python 3.13.2, Windows;
-[reports/rubric_update_tests.xml](reports/rubric_update_tests.xml)). The earlier 67-test run remains
-in `reports/test_results.txt`. What is covered:
+The HDF5 serving update passed **58 targeted tests** on 2026-11-26, covering format
+compatibility, API prediction, input screening, model switching, rollback and retraining.
+That result is recorded in [the deployment verification report](reports/deployment/hdf5_20261126.json);
+it is not a claim that the entire current suite was rerun. Coverage includes:
 
 | Module | Critical behaviour checked |
 |---|---|
@@ -467,15 +539,17 @@ The application has been deployed on a single Ubuntu VM with this Compose stack,
 Caddy HTTPS and an SSH rule restricted to the owner's client IP. See
 [deploy/azure/README.md](deploy/azure/README.md) for setup in your own account and
 [docs/SETUP.md](docs/SETUP.md) for fresh credentials and local preparation.
-Live availability depends on the VM schedule; deployment alone does not substitute
-for attaching the final cloud evaluation and load-test reports.
+Live availability depends on the VM schedule. Production evaluation and the
+1/2/3-replica load-test comparison are demonstrated in the
+[video](https://youtu.be/7QIUv2JxGkg), as confirmed by the project author.
 
 | Item | Status |
 |---|---|
 | Azure public URL | Deployed — URL above |
-| Cloud evaluation / health evidence | Add the final recorded evidence before submission |
-| Cloud load test (1/2/3 replicas) | Add final reports to `loadtest/results/azure_final/` and document the comparison |
-| YouTube demo video | **PENDING** — plan in [docs/demo_video_plan.md](docs/demo_video_plan.md) |
+| Cloud health / sample predictions | [HDF5 serving verified 2026-11-26](reports/deployment/hdf5_20261126.json); this sample check is not a full accuracy evaluation |
+| Production model evaluation | Demonstrated in the [video](https://youtu.be/7QIUv2JxGkg), confirmed by the project author |
+| Cloud load test (1/2/3 replicas) | Comparison demonstrated in the [video](https://youtu.be/7QIUv2JxGkg); [stress-test and routing evidence](loadtest/results/azure_final/README.md) also attached |
+| YouTube demo video | [Watch the demonstration](https://youtu.be/7QIUv2JxGkg) |
 
 ## Dataset licence and attribution
 
@@ -538,6 +612,9 @@ for attaching the final cloud evaluation and load-test reports.
   Preserve the executed notebook, trained model, source modules and evaluation evidence.
   The recipient follows [docs/SETUP.md](docs/SETUP.md) to recreate their environment, admin key
   configuration and the generated data/index files omitted from Git.
+  Internal QA notes, video plans/scripts and generated QA/build logs stay local and are
+  excluded by `.gitignore`. The setup guide, test suite, evaluation artifacts and load-test
+  evidence are included for reproducibility.
 * **Second attempt — GitHub URL:** publish the reviewed snapshot and submit the actual URL.
   Pushing this existing repository includes its reachable history. For a fresh public history,
   extract the reviewed ZIP into a separate folder, initialize a new repository there and push to
@@ -554,8 +631,8 @@ for attaching the final cloud evaluation and load-test reports.
 | FastAPI + Streamlit + worker + probe | Done — verified locally and in Docker |
 | Input gate (refuse non-MRI-like images, no diagnosis shown) | Done — calibrated for v001–v003; verified through the Docker gateway |
 | Upload → review → admit → background retraining → promotion / rollback | Done — full run on Docker; candidate v003 correctly not promoted; rollback demonstrated |
-| Tests | Done — 125 passed (2026-11-24), `reports/qa_tests.xml` |
+| Tests | Regression suite included; HDF5 update: 58 targeted tests passed (2026-11-26) |
 | Docker Compose with nginx load balancing; Locust 1/2/3 containers | Done — results above |
-| Azure deployment, public URL, cloud load test | Deployed; final cloud evidence and 1/2/3-replica comparison still need attaching |
-| Demo video (YouTube) | **PENDING** (plan in `docs/demo_video_plan.md`) |
+| Azure deployment, public URL, cloud evaluation and load test | Deployed; evaluation and 1/2/3-replica comparison demonstrated in the video (author-confirmed); supplementary reports attached |
+| Demo video (YouTube) | [Video link provided](https://youtu.be/7QIUv2JxGkg) |
 | GitHub repository URL | https://github.com/gilbmura/Mlops_structure — latest local changes still need publishing |

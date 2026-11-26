@@ -54,3 +54,12 @@ deploy-package*.tar.gz
 
 # Load-test scratch output (curated raw results live in loadtest/results/)
 loadtest/tmp/
+
+# Local planning notes and generated QA/build logs; keep public setup guides and results.
+/docs/qa_readiness.md
+/docs/demo_video_plan.md
+/docs/demo_video_script.md
+/reports/qa/
+/reports/*_tests.xml
+/reports/test_results.txt
+/reports/training_logs/

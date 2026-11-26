@@ -18,14 +18,16 @@ router = APIRouter(tags=["system"])
 def health(services: ServicesDep, response: Response) -> dict:
     """Liveness + readiness of *this* replica. Returns 503 while no model can be served."""
     try:
-        version, detail = services.models.get().version, None
+        model = services.models.get()
+        version, artifact, detail = model.version, model.artifact, None
     except ModelUnavailableError as exc:
-        version, detail = None, str(exc)
+        version, artifact, detail = None, None, str(exc)
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return {
         "status": "ok" if version else "degraded",
         "model_loaded": version is not None,
         "model_version": version,
+        "model_artifact": artifact,
         "process_uptime_seconds": services.uptime_seconds,
         "process_started_at": services.started_at,
         "served_by": services.hostname,

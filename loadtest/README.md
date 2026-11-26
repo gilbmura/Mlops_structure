@@ -4,6 +4,12 @@
 `POST /api/predict` on the Azure deployment. Use a bare HTTPS origin for `--host`;
 see [the setup guide](../docs/SETUP.md#7-deploy-and-test-in-your-own-cloud-account).
 
+An [Azure stress-test report and logs screenshot](results/azure_final/README.md)
+are attached for **1 API replica and 1,000 users** on 2026-11-26. It records
+902 requests and 471 failures (52.22%); it is separate from the local results
+below. The project author confirms that the Azure comparison with 1, 2 and 3
+replicas is demonstrated in the [video](https://youtu.be/7QIUv2JxGkg).
+
 The measurements below came from the earlier local workload. `run_scaling.py`
 targets the local gateway's `/predict` route and needs that route aligned with the
 current workload before it can be reused. Its historical output layout is:
@@ -47,5 +53,5 @@ slightly different moments after ramp-up.
   clearer gain at this step is latency (median 58 ms, p99 540 ms).
 * These numbers describe one laptop, where containers, Locust and the OS share 8 logical CPUs. More
   replicas than free cores would not help, and cloud results will differ (network latency, different vCPUs).
-  The final Azure reports and comparison still need adding to
-  [results/azure_final/](results/azure_final/README.md).
+  The Azure comparison is demonstrated in the linked video; supplementary
+  exports and routing evidence are in [results/azure_final/](results/azure_final/README.md).

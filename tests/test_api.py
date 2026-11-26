@@ -68,6 +68,7 @@ def test_health_reports_model_and_replica(real_client) -> None:
     response = real_client.get("/health")
     body = response.json()
     assert response.status_code == 200 and body["status"] == "ok" and body["model_loaded"]
+    assert body["model_artifact"] == "model.h5"
     assert response.headers["X-Served-By"] == body["served_by"]
     assert body["process_uptime_seconds"] >= 0
 
@@ -98,6 +99,7 @@ def test_non_mri_images_are_refused_without_a_diagnosis(real_client) -> None:
 def test_health_without_model_is_degraded(client) -> None:
     response = client.get("/health")
     assert response.status_code == 503 and response.json()["status"] == "degraded"
+    assert response.json()["model_artifact"] is None
 
 
 def test_direct_api_admission_cannot_bypass_content_checks(client):

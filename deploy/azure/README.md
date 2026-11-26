@@ -1,11 +1,13 @@
 # Azure deployment and verification
 
-> A VM was provisioned and the original stack was deployed on 2026-11-23 at
-> https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com.
-> The latest upload and batch-retraining changes have only been applied locally.
-> Azure CLI confirmed `PowerState/deallocated` on 2026-11-24; the VM was left stopped
-> at the owner's request. Cloud health, upload history, the updated release and cloud
-> load-test evidence still need verification after it is started.
+> The stack is deployed at https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com.
+> HDF5 prediction serving was deployed and verified on 2026-11-26 with one API replica.
+> See [the update and rollback record](HDF5_UPDATE.md) and
+> [public health/prediction evidence](../../reports/deployment/hdf5_20261126.json).
+> Availability depends on the VM's running schedule. The project author confirms
+> that production evaluation and the 1/2/3-replica performance comparison are
+> demonstrated in the [video](https://youtu.be/7QIUv2JxGkg). Supplementary reports
+> are in `loadtest/results/azure_final/`.
 
 ## Recommended target: one Linux VM running the same Docker Compose stack
 
@@ -76,16 +78,26 @@ websocket worked through Caddy; the UI's and probe's internal calls (no prefix) 
 8501 were closed from outside. Browsers show a certificate warning locally because Caddy's local
 certificate is not publicly trusted; on Azure, Let's Encrypt provides a trusted one.
 
-## Cloud evaluation and load test (PENDING)
+## Reproducing the cloud load test
 
-Run the same workload as locally, from your own machine, against the HTTPS endpoint:
+On the VM, select the API replica count. Repeat with 1, 2 and 3 using the same
+load-test settings, with no training job running during measurements:
+
+```bash
+docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml up -d --scale api=1
+docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml restart gateway
+```
+
+From the laptop, open Locust against the bare HTTPS origin. The workload already
+includes `/api/predict`, so do not append `/api` to the host:
 
 ```powershell
-docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml up -d --scale api=N
-docker compose -f docker-compose.yml -f deploy/azure/docker-compose.azure.yml restart gateway
-# Run the two commands above on the VM with N = 1, 2, 3; retain the Azure override.
-python -m locust -f loadtest/locustfile.py --headless --host https://<host>/api -u 60 -r 10 -t 120s --reset-stats --csv loadtest/results/azure/<N>_replicas/locust
+python -m locust -f loadtest/locustfile.py --host https://YOUR-SITE-HOST
 ```
+
+Open `http://localhost:8089`, configure the same users, spawn rate and duration for
+each run, then stop and download its reports before starting the next. Store final
+cloud evidence under `loadtest/results/azure_final/{1,2,3}_replicas/`.
 
 Record: VM size and vCPUs, per-container limits, replicas, users, request rate, successful
 throughput, failure rate, median/p95/p99 latency, warm-up and duration — and note that client
@@ -94,5 +106,6 @@ network latency is included. Results here will differ from the local ones; do no
 | Item | Status |
 |---|---|
 | Azure public URL | https://gilbert-brain-mri-demo.southafricanorth.cloudapp.azure.com (current reachability unverified) |
-| Cloud health / availability evidence | PENDING |
-| Cloud load test (1/2/3 replicas) | PENDING |
+| Cloud health / sample predictions | HDF5 serving verified 2026-11-26; see `reports/deployment/hdf5_20261126.json` |
+| Production model evaluation | Demonstrated in the [video](https://youtu.be/7QIUv2JxGkg), confirmed by the project author |
+| Cloud load test (1/2/3 replicas) | Comparison demonstrated in the [video](https://youtu.be/7QIUv2JxGkg); [supplementary stress-test and routing evidence](../../loadtest/results/azure_final/README.md) attached |

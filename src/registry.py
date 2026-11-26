@@ -3,8 +3,8 @@
 Layout under ``models/``::
 
     registry.json              active version + activation history + version summaries
-    versions/v001/model.keras  native Keras artifact (served)
-    versions/v001/model.h5     HDF5 artifact (assignment deliverable; reload-tested)
+    versions/v001/model.keras  native Keras artifact (training and evaluation default)
+    versions/v001/model.h5     HDF5 artifact (served; assignment deliverable; reload-tested)
     versions/v001/metadata.json, history.json
     versions/v001/input_gate.npz  calibration of the "does this look like a training MRI?" check
 

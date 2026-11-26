@@ -124,12 +124,20 @@ def test_active_model_provider_hot_swaps_and_survives_bad_artifacts(settings, co
     config = copy.deepcopy(config)
     config["serving"]["model_refresh_seconds"] = 0
     first = registry.register(build_model("baseline", 32, 1e-3), _metadata(), {}, PROBE)
+    # Serving must work from HDF5 even when the separate training artifact is unreadable.
+    (registry.version_dir(first) / "model.keras").write_bytes(b"corrupted")
     registry.activate(first, "initial")
     provider = ActiveModelProvider(registry, config)
     assert provider.get().version == first
+    assert provider.get().artifact == "model.h5"
 
     second = registry.register(build_model("baseline", 32, 1e-3), _metadata(), {}, PROBE)
-    (registry.version_dir(second) / "model.keras").write_bytes(b"corrupted")
-    registry.activate(second, "promote a corrupted artifact")
+    registry.activate(second, "promote a valid HDF5 artifact")
+    assert provider.get().version == second
+    assert registry.rollback("verify HDF5 rollback") == first
+    assert provider.get().version == first
+
+    (registry.version_dir(second) / "model.h5").write_bytes(b"corrupted")
+    registry.activate(second, "promote a corrupted HDF5 artifact")
     assert provider.get().version == first  # keeps serving the working model
     assert "Could not load" in provider.last_error

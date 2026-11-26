@@ -2,8 +2,8 @@
 
 ```
 registry.json                 active version, activation history (for rollback), version summaries
-versions/vNNN/model.keras     native Keras artifact (served by the API)
-versions/vNNN/model.h5        HDF5 artifact (assignment deliverable; reload-tested against model.keras)
+versions/vNNN/model.keras     native Keras artifact (training and evaluation default)
+versions/vNNN/model.h5        HDF5 artifact (served by the API; reload-tested against model.keras)
 versions/vNNN/metadata.json   class order, preprocessing spec, training config/seed, dataset version,
                               validation metrics, artifact SHA-256s, reload check
 versions/vNNN/history.json    per-epoch training/validation loss, accuracy, macro-F1
@@ -14,6 +14,10 @@ versions/vNNN/input_gate.npz  per-model calibration of the "does this look like 
 (`versions/v002/model.h5`, identical checksum), placed at the top level so it is easy to find. It is not
 updated automatically: if a later model is promoted, copy that version's `model.h5` over it. The versions
 are small (≤ 3.7 MB per artifact), so their folders and `registry.json` are included as well:
+
+Prediction loads `versions/<active-version>/model.h5`, including after promotion or rollback.
+It does not load the fixed top-level submission copy. `/health` reports `model_artifact`
+from the loaded predictor; a healthy HDF5 deployment reports `model.h5`.
 
 | Version | What it is | Status |
 |---|---|---|

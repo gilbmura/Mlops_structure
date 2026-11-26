@@ -24,6 +24,7 @@ class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
     model_version: str | None
+    model_artifact: str | None = Field(default=None, description="Artifact loaded for prediction; null when no model is loaded")
     process_uptime_seconds: float
     process_started_at: str
     served_by: str
